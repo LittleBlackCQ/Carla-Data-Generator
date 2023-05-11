@@ -54,10 +54,12 @@ class DataCollector:
         traffic_manager.set_synchronous_mode(synchronous_mode)
         traffic_manager.set_global_distance_to_leading_vehicle(global_distance)
         traffic_manager.set_hybrid_physics_mode(hybrid_physics_mode)
+        traffic_manager.set_respawn_dormant_vehicles(True)
     
     def set_hero_vehicle(self, world, set_autopilot=True):
         hero_bp = world.get_blueprint_library().find(self.hero_vehicle)
         hero_bp.set_attribute('color', '0, 0, 0') # set hero vehicle color to black
+        hero_bp.set_attribute('role_name', 'hero')
 
         transform = random.choice(world.get_map().get_spawn_points())
         hero_vehicle = world.spawn_actor(hero_bp, transform)
