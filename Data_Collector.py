@@ -147,7 +147,7 @@ class DataCollector:
         return False 
 
     def is_cyclist(self, vehicle):
-        if vehicle.attributes['number_of_wheels'] != 4:
+        if vehicle.attributes['number_of_wheels'] == '2':
             return True
         return False
     
