@@ -37,6 +37,8 @@ class DataCollector:
         self.reference_sensor_transform = None
 
         self.total_timestamp = collector_config['TOTAL_TIMESTAMPS']
+        self.save_interval = collector_config.get('SAVE_INTERVAL', None)
+        self.interval_index = 0
 
         self.logger = utils.create_logger()
         
@@ -260,7 +262,12 @@ class DataCollector:
                 world.tick()
 
                 self.set_spectator(world, hero_vehicle, z=5, pitch=-30) # set spectator for visualization
-
+                
+                if self.save_interval != None and (self.interval_index + 1) % self.save_interval != 0:
+                    self.interval_index += 1
+                    continue
+                
+                self.interval_index = 0
                 ############################# Prepare Data ###########################
 
                 data_dict = {lidar_group['NAME']: {'data': [], 'transform': []} for lidar_group in self.lidar_group_list}
