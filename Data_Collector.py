@@ -38,18 +38,20 @@ class DataCollector:
 
         self.total_timestamp = collector_config['TOTAL_TIMESTAMPS']
         self.save_interval = collector_config.get('SAVE_INTERVAL', None)
+        self.start_timestamp = collector_config.get('START_TIMESTAMP', 0)
         self.interval_index = 0
 
         self.logger = utils.create_logger()
         
 
-    def set_synchronization_and_traffic_manager(self, world, traffic_manager, delta_seconds=0.05, global_distance=2.0, hybrid_physics_mode=True, synchronous_mode=True):
+    def set_synchronization_world(self, world, synchronous_mode=True, delta_seconds=0.05):
         # Enables synchronous mode for world
         settings = world.get_settings()
         settings.synchronous_mode = synchronous_mode 
         settings.fixed_delta_seconds = delta_seconds
         world.apply_settings(settings)
 
+    def set_synchronization_traffic_manager(self, traffic_manager, global_distance=2.0, hybrid_physics_mode=True, synchronous_mode=True):
         # Set up the TM in synchronous mode
         traffic_manager.set_synchronous_mode(synchronous_mode)
         traffic_manager.set_global_distance_to_leading_vehicle(global_distance)
@@ -151,16 +153,30 @@ class DataCollector:
             return True
         return False
     
-    def filter_vehicles_dont_want(self, world, env_vehicle_id_list):
+    def filter_vehicles_dont_want(self, world, client, env_vehicle_id_list):
         self.logger.info(f'num of environment vehicles before filtering: {len(env_vehicle_id_list)}')
+
+        DestroyActor = carla.command.DestroyActor
+        destroyed_list = []
+        batch = []
 
         for env_vehicle_id in env_vehicle_id_list:
             env_vehicle = world.get_actor(env_vehicle_id)
             if self.is_bug_vehicle(env_vehicle) or self.is_cyclist(env_vehicle):
-                env_vehicle.destroy()
-                env_vehicle_id_list.remove(env_vehicle_id)
+                batch.append(DestroyActor(env_vehicle_id))
+                destroyed_list.append(env_vehicle_id)
         
+        for env_vehicle_id in destroyed_list:
+            env_vehicle_id_list.remove(env_vehicle_id)
+
+        client.apply_batch_sync(batch, True)
+
         self.logger.info(f'num of environment vehicles after filtering: {len(env_vehicle_id_list)}')
+
+    def check_vehicles(self, world, env_vehicle_id_list):
+        for env_vehicle_id in env_vehicle_id_list:
+            env_vehicle = world.get_actor(env_vehicle_id)
+            self.logger.info(env_vehicle.attributes['base_type'] + ' : ' + env_vehicle.attributes['number_of_wheels'])
 
     def prepare_labels(self, actors, data_type='Car'):
         labels = []
@@ -244,8 +260,6 @@ class DataCollector:
         world.unload_map_layer(carla.MapLayer.ParkedVehicles) # remove parked vehicles
 
         traffic_manager = client.get_trafficmanager(TRAFFIC_MANAGER_PORT)
-
-        self.set_synchronization_and_traffic_manager(world, traffic_manager)
         
         try:
             self.logger.info('------------------------ Start Generating ------------------------')
@@ -254,12 +268,16 @@ class DataCollector:
             hero_vehicle_id_list.append(hero_vehicle.id) 
 
             self.set_env_vehicles(world, client, env_vehicle_id_list)
-            self.filter_vehicles_dont_want(world, env_vehicle_id_list)
+            self.filter_vehicles_dont_want(world, client, env_vehicle_id_list)
+            # self.check_vehicles(world, env_vehicle_id_list)
         
             self.set_lidar_sensors(world, client, hero_vehicle, lidar_id_list)
             self.set_lidar_callback()
 
-            time_stamp = 0
+            self.set_synchronization_world(world)
+            self.set_synchronization_traffic_manager(traffic_manager)
+
+            time_stamp = self.start_timestamp
             while time_stamp < self.total_timestamp:
                 world.tick()
 
@@ -303,9 +321,7 @@ class DataCollector:
             self.logger.info('Exit by user!')
         
         finally:
-            settings = world.get_settings()
-            settings.synchronous_mode = False 
-            world.apply_settings(settings)
+            self.set_synchronization_world(world, synchronous_mode=False)
             self.logger.info('------------------- Destroying actors -----------------')
             self.destroy_actors(client, hero_vehicle_id_list)
             self.destroy_actors(client, env_vehicle_id_list)
