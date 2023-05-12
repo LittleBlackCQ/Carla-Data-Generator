@@ -4,7 +4,7 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default='.\\config\\simple_config.yaml', help='specify the config for collector')
+    parser.add_argument('--cfg_file', type=str, default='.\\config\\three_lidars.yaml', help='specify the config for collector')
 
     args = parser.parse_args()
     collector_config = utils.config_from_yaml(args.cfg_file)
