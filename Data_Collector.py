@@ -31,8 +31,8 @@ class DataCollector:
             for lidar in lidar_group['LIDARS']:
                 self.lidars.append(lidar)
 
-        self.lidar_data_queue = queue.Queue()
         self.lidar_actors = []
+        self.lidar_queues = []
 
         self.reference_sensor_transform = None
 
@@ -42,6 +42,8 @@ class DataCollector:
         self.interval_index = 0
 
         self.logger = utils.create_logger()
+
+        self.frame = None
         
 
     def set_synchronization_world(self, world, synchronous_mode=True, delta_seconds=0.05):
@@ -51,7 +53,7 @@ class DataCollector:
         settings.fixed_delta_seconds = delta_seconds
         world.apply_settings(settings)
 
-    def set_synchronization_traffic_manager(self, traffic_manager, global_distance=2.0, hybrid_physics_mode=True, synchronous_mode=True):
+    def set_synchronization_traffic_manager(self, traffic_manager, global_distance=3, hybrid_physics_mode=True, synchronous_mode=True):
         # Set up the TM in synchronous mode
         traffic_manager.set_synchronous_mode(synchronous_mode)
         traffic_manager.set_global_distance_to_leading_vehicle(global_distance)
@@ -116,6 +118,7 @@ class DataCollector:
             lidar_bp = world.get_blueprint_library().find('sensor.lidar.ray_cast')
             for key, value in lidar['SETUP'].items():
                 lidar_bp.set_attribute(key, value)
+            lidar_bp.set_attribute('sensor_tick', '0.05')
 
             transform = carla.Transform(carla.Location(x = lidar['TRANSFORM']['x'], y = lidar['TRANSFORM']['y'], z = lidar['TRANSFORM']['z']), carla.Rotation(yaw = lidar['TRANSFORM']['yaw']))
         
@@ -129,19 +132,16 @@ class DataCollector:
                 self.lidar_actors.append(world.get_actor(response.actor_id))
         self.logger.info('Set lidars Done!')
 
-    def set_lidar_callback(self):
+    def set_lidar_queue(self):
         for lidar_actor in self.lidar_actors:
-            lidar_actor.listen(lambda data: self.lidar_callback(data))
-
+            q = queue.Queue()
+            lidar_actor.listen(q.put)
+            self.lidar_queues.append(q)
+    
     def set_spectator(self, world, hero_vehicle, z=20, pitch=-90):
         spectator = world.get_spectator()
         hero_transform = hero_vehicle.get_transform()
         spectator.set_transform(carla.Transform(hero_transform.location+carla.Location(z=z), carla.Rotation(yaw=hero_transform.rotation.yaw, pitch=pitch, roll=hero_transform.rotation.roll)))
-
-    def lidar_callback(self, data):
-        point_cloud = np.frombuffer(data.raw_data, dtype=np.float32).reshape(-1, 4).copy()
-        transform = data.transform
-        self.lidar_data_queue.put((point_cloud, transform))
 
     def is_bug_vehicle(self, vehicle):
         if vehicle.bounding_box.extent.x == 0.0 or vehicle.bounding_box.extent.y == 0.0:
@@ -177,6 +177,13 @@ class DataCollector:
         for env_vehicle_id in env_vehicle_id_list:
             env_vehicle = world.get_actor(env_vehicle_id)
             self.logger.info(env_vehicle.attributes['base_type'] + ' : ' + env_vehicle.attributes['number_of_wheels'])
+
+    def _retrieve_data(self, sensor_queue, timeout = 2.0):
+        while True:
+            data_origin = sensor_queue.get(timeout=timeout)
+            if data_origin.frame == self.frame:
+                data, transform = np.frombuffer(data_origin.raw_data, dtype=np.float32).reshape(-1, 4).copy(), data_origin.transform
+                return [data, transform]
 
     def prepare_labels(self, actors, data_type='Car'):
         labels = []
@@ -272,34 +279,42 @@ class DataCollector:
             # self.check_vehicles(world, env_vehicle_id_list)
         
             self.set_lidar_sensors(world, client, hero_vehicle, lidar_id_list)
-            self.set_lidar_callback()
+            self.set_lidar_queue()
 
             self.set_synchronization_world(world)
             self.set_synchronization_traffic_manager(traffic_manager)
 
             time_stamp = self.start_timestamp
+
             while time_stamp < self.total_timestamp:
-                world.tick()
+                self.frame = world.tick()
 
                 self.set_spectator(world, hero_vehicle, z=5, pitch=-30) # set spectator for visualization
                 
-                if self.save_interval != None and (self.interval_index + 1) % self.save_interval != 0:
-                    self.interval_index += 1
-                    continue
+                ############################ Get Data ##################################
+
+                data_total = [self._retrieve_data(q) for q in self.lidar_queues]
                 
-                self.interval_index = 0
                 ############################# Prepare Data ###########################
 
                 data_dict = {lidar_group['NAME']: {'data': [], 'transform': []} for lidar_group in self.lidar_group_list}
 
                 for lidar_group in self.lidar_group_list:
                     for i in range(len(lidar_group['LIDARS'])):
-                        data, transform = self.lidar_data_queue.get(block=True, timeout=0.05)
+                        data, transform = data_total.pop(0)
                         data_dict[lidar_group['NAME']]['data'].append(data)
                         data_dict[lidar_group['NAME']]['transform'].append(transform)
 
                         if lidar_group['LIDARS'][i].get('REFERENCE_LIDAR', False):
                             self.reference_sensor_transform = transform
+
+                ########################## Check Save Interval ########################
+
+                if self.save_interval != None and (self.interval_index + 1) % self.save_interval != 0:
+                    self.interval_index += 1
+                    continue
+                
+                self.interval_index = 0
 
                 ############################ Prepare Labels ###########################
 

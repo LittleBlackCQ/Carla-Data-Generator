@@ -4,17 +4,17 @@ import mayavi.mlab as mlab   #使用mayavi进行3D点云的可视化
 
 colors = sns.color_palette('Paired', 9 * 2)
 names = ['Car', 'Van', 'Truck', 'Pedestrian', 'Hero', 'Cyclist', 'Tram', 'Misc', 'DontCare']
-dataset = 'two_lidars_on_light_06'
-file_id = f'000090'
+dataset = 'one_lidar_05'
+file_id = f'001500'
 
 if __name__ == '__main__':
 
   # load point clouds
-  scan_dir = f'data\\{dataset}\\points\\{file_id}.npy'
+  scan_dir = f'data512\\{dataset}\\points\\{file_id}.npy'
   scan = np.load(scan_dir)
 
   # load labels
-  label_dir = f'data\\{dataset}\\labels\\{file_id}.txt'
+  label_dir = f'data512\\{dataset}\\labels\\{file_id}.txt'
   with open(label_dir, 'r') as f:
     labels = f.readlines()
 
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     l, w, h, x, y, z, rot = map(float, [l, w, h, x, y, z, rot])
 
     distance = np.sqrt(x**2 + y**2 + z**2)
-    if distance > 50:
+    if distance > 100:
       continue
     
     x_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]

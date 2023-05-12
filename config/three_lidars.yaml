@@ -1,0 +1,72 @@
+DATA_SAVE_PATH: data512
+
+MAP: Town04_Opt
+
+HERO_VEHICLE: vehicle.tesla.model3
+
+NUM_OF_ENV_VEHICLES: 300
+
+TOTAL_TIMESTAMPS: 2000
+
+START_TIMESTAMP: 0
+
+SAVE_INTERVAL: 10
+
+LIDAR_GROUP_LIST:
+    - NAME: one_lidar_18
+      LIDARS: 
+          - NAME: head_center_lidar
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                channels: '128',
+                upper_fov: '10',
+                lower_fov: '-15',
+                horizontal_fov: '180.0'
+            }
+            TRANSFORM: {
+                x: 2.4,
+                y: 0.0,
+                z: 1.8,
+                yaw: 0.0
+            }
+            REFERENCE_LIDAR: True
+    
+    - NAME: one_lidar_10
+      LIDARS:
+          - NAME: mid_center_lidar
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                channels: '128',
+                upper_fov: '12.5',
+                lower_fov: '-12.5',
+                horizontal_fov: '180.0'
+            }
+            TRANSFORM: {
+                x: 2.4,
+                y: 0.0,
+                z: 1.0,
+                yaw: 0.0
+            }
+
+    - NAME: one_lidar_05
+      LIDARS: 
+          - NAME: bottom_center_lidar
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                channels: '128',
+                upper_fov: '12.5',
+                lower_fov: '-12.5',
+                horizontal_fov: '180.0'
+            }
+            TRANSFORM: {
+                x: 2.4,
+                y: 0.0,
+                z: 0.5,
+                yaw: 0.0
+            }
