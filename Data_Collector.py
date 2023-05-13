@@ -286,7 +286,7 @@ class DataCollector:
 
             time_stamp = self.start_timestamp
 
-            while time_stamp < self.total_timestamp:
+            while time_stamp < self.total_timestamp + self.start_timestamp:
                 self.frame = world.tick()
 
                 self.set_spectator(world, hero_vehicle, z=5, pitch=-30) # set spectator for visualization
