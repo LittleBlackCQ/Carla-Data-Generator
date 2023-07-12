@@ -11,6 +11,6 @@ def main():
 
     data_collector = DataCollector(collector_config)
     data_collector.start_collecting()
-
+        
 if __name__ == '__main__':
     main()
