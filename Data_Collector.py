@@ -44,6 +44,9 @@ class DataCollector:
         self.logger = utils.create_logger()
 
         self.frame = None
+
+        self.save_lane = collector_config.get('SAVE_LANE', True)
+
         
 
     def set_synchronization_world(self, world, synchronous_mode=True, delta_seconds=0.05):
@@ -63,7 +66,7 @@ class DataCollector:
     def set_hero_vehicle(self, world, set_autopilot=True):
         hero_bp = world.get_blueprint_library().find(self.hero_vehicle)
         hero_bp.set_attribute('color', '0, 0, 0') # set hero vehicle color to black
-        hero_bp.set_attribute('role_name', 'hero')
+        hero_bp.set_attribute('role_name', 'autopilot')
 
         transform = random.choice(world.get_map().get_spawn_points())
         hero_vehicle = world.spawn_actor(hero_bp, transform)
@@ -141,7 +144,7 @@ class DataCollector:
     def set_spectator(self, world, hero_vehicle, z=20, pitch=-90):
         spectator = world.get_spectator()
         hero_transform = hero_vehicle.get_transform()
-        spectator.set_transform(carla.Transform(hero_transform.location+carla.Location(z=z), carla.Rotation(yaw=hero_transform.rotation.yaw, pitch=pitch, roll=hero_transform.rotation.roll)))
+        spectator.set_transform(carla.Transform(hero_transform.location+carla.Location(x=-3, y=2, z=z-2), carla.Rotation(yaw=hero_transform.rotation.yaw+70, pitch=pitch, roll=hero_transform.rotation.roll)))
 
     def is_bug_vehicle(self, vehicle):
         if vehicle.bounding_box.extent.x == 0.0 or vehicle.bounding_box.extent.y == 0.0:
@@ -185,7 +188,7 @@ class DataCollector:
                 data, transform = np.frombuffer(data_origin.raw_data, dtype=np.float32).reshape(-1, 4).copy(), data_origin.transform
                 return [data, transform]
 
-    def prepare_labels(self, actors, data_type='Car'):
+    def prepare_labels(self, actors, map=None, data_type='Car'):
         labels = []
         for actor in actors:
             bb_cords = [0, 0, 0, 1]
@@ -205,6 +208,18 @@ class DataCollector:
             
             bb_label = list(bb_to_sensor_cords) + list(bb_extents) + [bb_rotation] + [data_type]
 
+            if map != None and self.save_lane:
+                way_point = map.get_waypoint(actor.get_location())
+                bb_label += [way_point.lane_id]
+
+                left_lane = way_point.get_left_lane()
+                right_lane = way_point.get_right_lane()
+
+                left_lane_id = left_lane.lane_id if (left_lane != None and str(left_lane.lane_type)=="Driving") else None
+                right_lane_id = right_lane.lane_id if (right_lane != None and str(right_lane.lane_type)=="Driving") else None
+
+                bb_label += [left_lane_id, right_lane_id]
+                
             labels.append(bb_label)
 
         return np.array(labels)
@@ -318,8 +333,8 @@ class DataCollector:
 
                 ############################ Prepare Labels ###########################
 
-                labels = self.prepare_labels(world.get_actors(env_vehicle_id_list))
-                label_hero = self.prepare_labels(world.get_actors(hero_vehicle_id_list), data_type='Hero')
+                labels = self.prepare_labels(world.get_actors(env_vehicle_id_list), map=world.get_map())
+                label_hero = self.prepare_labels(world.get_actors(hero_vehicle_id_list), map=world.get_map(), data_type='Hero')
                 labels = np.concatenate((labels, label_hero), axis=0)
 
                 ############################## Save Data ##############################
@@ -340,7 +355,8 @@ class DataCollector:
             self.logger.info('------------------- Destroying actors -----------------')
             self.destroy_actors(client, hero_vehicle_id_list)
             self.destroy_actors(client, env_vehicle_id_list)
-            self.destroy_actors(client, lidar_id_list)
+            for lidar in self.lidar_actors:
+                lidar.destroy()
             self.logger.info('------------------------ Done ------------------------')
 
         
