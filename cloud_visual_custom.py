@@ -1,6 +1,6 @@
 import numpy as np
 import seaborn as sns
-import mayavi.mlab as mlab   #使用mayavi进行3D点云的可视化
+import open3d as mlab   #使用mayavi进行3D点云的可视化
 
 colors = sns.color_palette('Paired', 9 * 2)
 names = ['Car', 'Van', 'Truck', 'Pedestrian', 'Hero', 'Cyclist', 'Tram', 'Misc', 'DontCare']
@@ -54,11 +54,9 @@ if __name__ == '__main__':
 
   fig = mlab.figure(bgcolor=(0, 0, 0))
   # draw point cloud
-  semantic_label = scan[:, -1].astype(np.uint32)
   # color = np.divide(LABEL_COLORS[semantic_label], 255.0)
   # color = np.take(LABEL_COLORS, semantic_label, axis=0)
-  for i in range(len(scan)):
-    plot = mlab.points3d(scan[i, 0], scan[i, 1], scan[i, 2], color=tuple(LABEL_COLORS[semantic_label[i]]), mode="point", figure=fig)
+  plot = mlab.points3d(scan[:, 0], scan[:, 1], scan[:, 2], mode="point", figure=fig)
 
   for line in labels:
     if line == '':
