@@ -12,10 +12,11 @@ START_TIMESTAMP: 3600
 
 SAVE_INTERVAL: 10
 
-LIDAR_GROUP_LIST:
+SENSOR_GROUP_LIST:
     - NAME: one_lidar_18
-      LIDARS: 
+      SENSOR_GROUP: 
           - NAME: head_center_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '1228800',

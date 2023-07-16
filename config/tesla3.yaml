@@ -10,10 +10,14 @@ TOTAL_TIMESTAMPS: 2000
 
 SAVE_INTERVAL: 10
 
-LIDAR_GROUP_LIST:
+SENSOR_GROUP_LIST:
     - NAME: one_lidar_on_head_16
-      LIDARS: 
+      TYPE: lidar_group
+      REFERENCE_LIDAR: 0
+      SEMANTIC: False
+      SENSOR_GROUP: 
           - NAME: head_center_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -29,11 +33,14 @@ LIDAR_GROUP_LIST:
                 z: 1.35,
                 yaw: 0.0
             }
-            REFERENCE_LIDAR: True
     
     - NAME: two_lidars_on_light_06
-      LIDARS:
+      TYPE: lidar_group
+      REFERENCE_LIDAR: 0
+      SEMANTIC: False
+      SENSOR_GROUP:
           - NAME: light_left_side_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -51,6 +58,7 @@ LIDAR_GROUP_LIST:
             }
 
           - NAME: light_right_side_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -68,8 +76,12 @@ LIDAR_GROUP_LIST:
             }
 
     - NAME: three_lidars_on_bumper_04
-      LIDARS: 
+      TYPE: lidar_group
+      REFERENCE_LIDAR: 0
+      SEMANTIC: False
+      SENSOR_GROUP: 
           - NAME: bumper_left_side_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -87,6 +99,7 @@ LIDAR_GROUP_LIST:
             }
 
           - NAME: bumper_right_side_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -104,6 +117,7 @@ LIDAR_GROUP_LIST:
             }
 
           - NAME: bumper_center_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',

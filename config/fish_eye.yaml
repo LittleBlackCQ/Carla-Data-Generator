@@ -1,0 +1,69 @@
+DATA_SAVE_PATH: data
+
+MAP: Town04_Opt
+
+HERO_VEHICLE: vehicle.tesla.model3
+
+SAVE_INTERVAL: 5
+
+SENSOR_GROUP_LIST:
+    - NAME: lidar
+	  TYPE: lidar_group
+	  REFERENCE_LIDAR: 0
+	  SEMANTIC: True
+      SENSOR_GROUP: 
+          - NAME: lidar1
+            TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 5,
+                y: 5,
+                z: 1.8,
+            }
+
+		  - NAME: lidar2
+		    TYPE: lidar.ray_cast_semantic
+		  	SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: -5,
+                y: 5,
+                z: 1.8,
+            }
+    
+          - NAME: lidar3
+		    TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 5,
+                y: -5,
+                z: 1.8,
+            }
+
+		  - NAME: lidar4
+		    TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: -5,
+                y: -5,
+                z: 1.8,
+            }
