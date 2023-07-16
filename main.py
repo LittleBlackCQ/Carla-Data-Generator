@@ -5,7 +5,7 @@ import argparse
 
 def main():
     parser = argparse.ArgumentParser(description='arg parser')
-    parser.add_argument('--cfg_file', type=str, default='tesla3.yaml', help='specify the config for collector')
+    parser.add_argument('--cfg_file', type=str, default='fish_eye.yaml', help='specify the config for collector')
 
     args = parser.parse_args()
     cfg_file = os.path.join("config", args.cfg_file)

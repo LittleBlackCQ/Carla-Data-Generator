@@ -29,12 +29,6 @@ class DataCollector:
             os.mkdir(self.data_save_path)
 
         self.sensor_group_list = collector_config['SENSOR_GROUP_LIST']
-        # self.lidars = []
-
-        # for lidar_group in self.lidar_group_list:
-        #     for lidar in lidar_group['LIDARS']:
-        #         self.lidars.append(lidar)
-
         
         self.reference_sensor_transform = None
 
@@ -43,6 +37,7 @@ class DataCollector:
         self.start_timestamp = collector_config.get('START_TIMESTAMP', 0)
 
         self.save_lane = collector_config.get('SAVE_LANE', False)
+        self.save_lidar_labels = collector_config.get('SAVE_LIDAR_LABELS', True)
 
         self.client = None
         self.world = None
@@ -151,7 +146,7 @@ class DataCollector:
     def set_spectator(self, z=20, pitch=-90):
         spectator = self.world.get_spectator()
         hero_transform = self.hero_vehicle.get_transform()
-        spectator.set_transform(carla.Transform(hero_transform.location+carla.Location(x=-3, y=2, z=z-2), carla.Rotation(yaw=hero_transform.rotation.yaw+70, pitch=pitch, roll=hero_transform.rotation.roll)))
+        spectator.set_transform(carla.Transform(hero_transform.location+carla.Location(z=z), carla.Rotation(yaw=hero_transform.rotation.yaw, pitch=pitch, roll=hero_transform.rotation.roll)))
 
     def is_bug_vehicle(self, vehicle):
         if vehicle.bounding_box.extent.x == 0.0 or vehicle.bounding_box.extent.y == 0.0:
@@ -180,11 +175,6 @@ class DataCollector:
 
         self.client.apply_batch_sync(batch, True)
         self.logger.info(f'num of environment vehicles after filtering: {len(self.env_vehicles)}')
-
-    # def check_vehicles(self, env_vehicle_id_list):
-    #     for env_vehicle_id in env_vehicle_id_list:
-    #         env_vehicle = self.world.get_actor(env_vehicle_id)
-    #         self.logger.info(env_vehicle.attributes['base_type'] + ' : ' + env_vehicle.attributes['number_of_wheels'])
 
     def _retrieve_data(self, sensor_queue, timeout = 2.0):
         while True:
@@ -230,57 +220,24 @@ class DataCollector:
         return np.array(labels)
     
     def merge_lidar_group(self, data_list, reference_transform, semantic=False):
-        point_merged = None
+        point_merged = np.array([])
         for data, transform in data_list:
-            point = np.frombuffer(data, dtype=np.float32).reshape(-1, 6).copy() if semantic else np.frombuffer(data, dtype=np.float32).reshape(-1, 4).copy()
+            if semantic:
+                point = np.frombuffer(data, dtype=np.dtype([('x', np.float32), ('y', np.float32), ('z', np.float32), \
+                    ('CosAngle', np.float32), ('ObjIdx', np.uint32), ('ObjTag', np.uint32)])).copy() 
+                point = np.array([point['x'], point['y'], point['z'], point['CosAngle'], point['ObjTag']]).T
+                point = point.astype(np.float32)
+
+            else:
+                np.frombuffer(data, dtype=np.float32).reshape(-1, 4).copy()
+                
             point = utils.transform_points_to_reference(point, transform, reference_transform)
-            if point_merged == None:
+            if len(point_merged) == 0:
                 point_merged = point
             else:
                 point_merged = np.concatenate((point_merged, point), axis=0)
         return point_merged
             
-    def save_data(self, data, path, extension, time_stamp):
-
-        # def merge_data_list(data_list, transform_list, reference_transform):
-        #     merged = False
-        #     data_merged = None
-
-        #     for i in range(len(data_list)):
-        #         data = data_list[i]
-        #         transform = transform_list[i]
-
-        #         intensity = data[:, -1]
-        #         data[:, -1] = 1
-        #         local_sensor_to_world = transform.get_matrix()
-        #         world_to_reference_sensor = reference_transform.get_inverse_matrix()
-        #         data = np.dot(np.dot(world_to_reference_sensor, local_sensor_to_world), data.T).T
-        #         data[:, 1] = - data[:, 1]
-        #         data[:, -1] = intensity
-
-        #         if not merged:
-        #             data_merged = data
-        #             merged = True
-        #         else:
-        #             data_merged = np.concatenate((data_merged, data), axis=0)                   
-                
-        #     return data_merged
-        
-        # data_merged = merge_data_list(data_list, transform_list, self.reference_sensor_transform)
-
-        # save_path = os.path.join(self.data_save_path, group)
-        # points_save_path = os.path.join(save_path, 'points')
-        # labels_save_path = os.path.join(save_path, 'labels')
-        # if not os.path.exists(points_save_path):
-        #     os.makedirs(points_save_path)
-        # if not os.path.exists(labels_save_path):
-        #     os.makedirs(labels_save_path)
-        
-        np.save(os.path.join(points_save_path, f'%06d.npy'%(time_stamp)), data_merged)
-        np.savetxt(os.path.join(labels_save_path, f'%06d.txt'%(time_stamp)), labels, fmt='%s')
-        
-        self.logger.info(f'{time_stamp} {group} saved successfully!')
-
     def destroy_actors(self):
         self.hero_vehicle.destroy()
         for actor in self.env_vehicles:
@@ -298,78 +255,82 @@ class DataCollector:
 
         traffic_manager = self.client.get_trafficmanager(TRAFFIC_MANAGER_PORT)
         
-        # try:
-        self.logger.info('------------------------ Start Generating ------------------------')
+        try:
+            self.logger.info('------------------------ Start Generating ------------------------')
 
-        self.set_hero_vehicle()
+            self.set_hero_vehicle()
 
-        self.set_env_vehicles()
-        self.filter_vehicles_dont_want()
-        # self.check_vehicles(world, env_vehicle_id_list)
-    
-        self.set_sensors()
-        self.set_sensor_queue()
+            self.set_env_vehicles()
+            self.filter_vehicles_dont_want()
+        
+            self.set_sensors()
+            self.set_sensor_queue()
 
-        self.set_synchronization_world()
-        self.set_synchronization_traffic_manager(traffic_manager)
+            self.set_synchronization_world()
+            self.set_synchronization_traffic_manager(traffic_manager)
 
-        time_stamp = self.start_timestamp
-        interval_index = 0
-
-        while time_stamp < self.total_timestamp + self.start_timestamp:
-            self.frame = self.world.tick()
-
-            self.set_spectator(z=5, pitch=-30) # set spectator for visualization
-            
-            ############################ Get Data ##################################
-
-            data_total = [self._retrieve_data(q) for q in self.sensor_queues]
-            
-            ########################## Check Save Interval ########################
-
-            if self.save_interval != None and (interval_index + 1) != self.save_interval:
-                interval_index += 1
-                continue
-            
+            time_stamp = self.start_timestamp
             interval_index = 0
 
-            ############################# Save Data ###########################
+            while time_stamp < self.total_timestamp + self.start_timestamp:
+                self.frame = self.world.tick()
 
-            for sensor_group in self.sensor_group_list:
-                save_path = os.path.join(self.data_save_path, sensor_group["NAME"])
-                if sensor_group["TYPE"] == 'lidar_group':
-                    num_lidars = len(sensor_group["SENSOR_GROUP"])
-                    data_group = data_total[:num_lidars]
+                self.set_spectator(z=5, pitch=-30) # set spectator for visualization
+                
+                ############################ Get Data ##################################
 
-                    reference_sensor_id = sensor_group["REFERENCE_LIDAR"]
-                    reference_sensor_transform = data_group[reference_sensor_id][1]
+                data_total = [self._retrieve_data(q) for q in self.sensor_queues]
+                
+                ########################## Check Save Interval ########################
 
-                    point_merged = self.merge_lidar_group(data_group, reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
-                    data_total = data_total[num_lidars:]
+                if self.save_interval != None and (interval_index + 1) != self.save_interval:
+                    interval_index += 1
+                    continue
+                
+                interval_index = 0
 
-                    ##################### Prepare Labels #######################
+                ############################# Save Data ###########################
+                reference_sensor_transform = None
+                for sensor_group in self.sensor_group_list:
+                    save_path = os.path.join(self.data_save_path, sensor_group["NAME"])
+                    ################### lidar group #############
+                    if sensor_group["TYPE"] == 'lidar_group':
+                        num_lidars = len(sensor_group["SENSOR_GROUP"])
+                        data_group = data_total[:num_lidars]
 
+                        if reference_sensor_transform == None:
+                            reference_sensor_transform = data_group[0][1]
+
+                        point_merged = self.merge_lidar_group(data_group, reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
+                        data_total = data_total[num_lidars:]
+
+                        np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
+                
+                ##################### 3D bboxes labels #######################
+                if self.save_lidar_labels:
+                    save_path = os.path.join(self.data_save_path, "label3")
+                    if not os.path.exists(save_path):
+                        os.mkdir(save_path)
                     labels = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map())
                     label_hero = self.prepare_labels([self.hero_vehicle], reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
-                    labels = np.concatenate((labels, label_hero), axis=0)
+                    labels = np.concatenate((labels, label_hero), axis=0) if len(labels) != 0 else label_hero
 
-                    ################## Save Data ########################
-                    np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
-                    np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels)
+                    np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
 
-            time_stamp += 1
+                self.logger.info(f'Time stamp {time_stamp} saved successfully!')
+                time_stamp += 1
 
-        # except RuntimeError:
-        #     self.logger.info('Something wrong happened!')
+        except RuntimeError:
+            self.logger.info('Something wrong happened!')
         
-        # except KeyboardInterrupt:
-        #     self.logger.info('Exit by user!')
+        except KeyboardInterrupt:
+            self.logger.info('Exit by user!')
         
-        # finally:
-        self.set_synchronization_world(synchronous_mode=False)
-        self.logger.info('------------------- Destroying actors -----------------')
-        self.destroy_actors()
-        self.logger.info('------------------------ Done ------------------------')
+        finally:
+            self.set_synchronization_world(synchronous_mode=False)
+            self.logger.info('------------------- Destroying actors -----------------')
+            self.destroy_actors()
+            self.logger.info('------------------------ Done ------------------------')
 
         
 

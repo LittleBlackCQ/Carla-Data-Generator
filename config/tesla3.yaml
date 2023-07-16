@@ -11,9 +11,8 @@ TOTAL_TIMESTAMPS: 2000
 SAVE_INTERVAL: 10
 
 SENSOR_GROUP_LIST:
-    - NAME: one_lidar_on_head_16
+    - NAME: point16
       TYPE: lidar_group
-      REFERENCE_LIDAR: 0
       SEMANTIC: False
       SENSOR_GROUP: 
           - NAME: head_center_lidar
@@ -34,9 +33,8 @@ SENSOR_GROUP_LIST:
                 yaw: 0.0
             }
     
-    - NAME: two_lidars_on_light_06
+    - NAME: point06
       TYPE: lidar_group
-      REFERENCE_LIDAR: 0
       SEMANTIC: False
       SENSOR_GROUP:
           - NAME: light_left_side_lidar
@@ -75,9 +73,8 @@ SENSOR_GROUP_LIST:
                 yaw: -30.0
             }
 
-    - NAME: three_lidars_on_bumper_04
+    - NAME: point04
       TYPE: lidar_group
-      REFERENCE_LIDAR: 0
       SEMANTIC: False
       SENSOR_GROUP: 
           - NAME: bumper_left_side_lidar

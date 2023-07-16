@@ -6,11 +6,12 @@ HERO_VEHICLE: vehicle.tesla.model3
 
 SAVE_INTERVAL: 5
 
+SAVE_LIDAR_LABELS: True
+
 SENSOR_GROUP_LIST:
     - NAME: lidar
-	  TYPE: lidar_group
-	  REFERENCE_LIDAR: 0
-	  SEMANTIC: True
+      TYPE: lidar_group
+      SEMANTIC: True
       SENSOR_GROUP: 
           - NAME: lidar1
             TYPE: lidar.ray_cast_semantic
@@ -26,9 +27,9 @@ SENSOR_GROUP_LIST:
                 z: 1.8,
             }
 
-		  - NAME: lidar2
-		    TYPE: lidar.ray_cast_semantic
-		  	SETUP: {
+          - NAME: lidar2
+            TYPE: lidar.ray_cast_semantic
+            SETUP: {
                 range: '150', 
                 points_per_second: '1228800',
                 rotation_frequency: '20', 
@@ -41,7 +42,7 @@ SENSOR_GROUP_LIST:
             }
     
           - NAME: lidar3
-		    TYPE: lidar.ray_cast_semantic
+            TYPE: lidar.ray_cast_semantic
             SETUP: {
                 range: '150', 
                 points_per_second: '1228800',
@@ -54,8 +55,8 @@ SENSOR_GROUP_LIST:
                 z: 1.8,
             }
 
-		  - NAME: lidar4
-		    TYPE: lidar.ray_cast_semantic
+          - NAME: lidar4
+            TYPE: lidar.ray_cast_semantic
             SETUP: {
                 range: '150', 
                 points_per_second: '1228800',
