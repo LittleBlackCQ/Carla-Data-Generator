@@ -15,8 +15,7 @@ SENSOR_GROUP_LIST:
       TYPE: lidar_group
       SEMANTIC: False
       SENSOR_GROUP: 
-          - NAME: head_center_lidar
-            TYPE: lidar.ray_cast
+          - TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -37,8 +36,7 @@ SENSOR_GROUP_LIST:
       TYPE: lidar_group
       SEMANTIC: False
       SENSOR_GROUP:
-          - NAME: light_left_side_lidar
-            TYPE: lidar.ray_cast
+          - TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -55,8 +53,7 @@ SENSOR_GROUP_LIST:
                 yaw: 30.0
             }
 
-          - NAME: light_right_side_lidar
-            TYPE: lidar.ray_cast
+          - TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -77,8 +74,7 @@ SENSOR_GROUP_LIST:
       TYPE: lidar_group
       SEMANTIC: False
       SENSOR_GROUP: 
-          - NAME: bumper_left_side_lidar
-            TYPE: lidar.ray_cast
+          - TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -95,8 +91,7 @@ SENSOR_GROUP_LIST:
                 yaw: 0.0
             }
 
-          - NAME: bumper_right_side_lidar
-            TYPE: lidar.ray_cast
+          - TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',
@@ -113,8 +108,7 @@ SENSOR_GROUP_LIST:
                 yaw: -90.0
             }
 
-          - NAME: bumper_center_lidar
-            TYPE: lidar.ray_cast
+          - TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '576000',

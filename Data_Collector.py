@@ -180,7 +180,7 @@ class DataCollector:
         while True:
             data_origin = sensor_queue.get(timeout=timeout)
             if data_origin.frame == self.frame:
-                return [data_origin.raw_data, data_origin.transform]
+                return data_origin
 
     def prepare_labels(self, actors, reference_sensor_transform, map=None, data_type=None):
         labels = []
@@ -297,14 +297,21 @@ class DataCollector:
                     if sensor_group["TYPE"] == 'lidar_group':
                         num_lidars = len(sensor_group["SENSOR_GROUP"])
                         data_group = data_total[:num_lidars]
-
-                        if reference_sensor_transform == None:
-                            reference_sensor_transform = data_group[0][1]
-
-                        point_merged = self.merge_lidar_group(data_group, reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
                         data_total = data_total[num_lidars:]
 
+                        if reference_sensor_transform == None:
+                            reference_sensor_transform = data_group[0].transform
+
+                        point_group = [[data.raw_data, data.transform] for data in data_group]
+                        point_merged = self.merge_lidar_group(point_group, reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
+                        
                         np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
+
+                    elif sensor_group["TYPE"] == 'camera_rgb':
+                        data = data_total[0]
+                        data_total = data_total[1:]
+
+                        data.save_to_disk(os.path.join(save_path, "%06d"%(time_stamp)))
                 
                 ##################### 3D bboxes labels #######################
                 if self.save_lidar_labels:
