@@ -1,10 +1,10 @@
 import numpy as np
 import seaborn as sns
-import open3d as mlab   #使用mayavi进行3D点云的可视化
+import mayavi.mlab as mlab   #使用mayavi进行3D点云的可视化
 
 colors = sns.color_palette('Paired', 9 * 2)
 names = ['Car', 'Van', 'Truck', 'Pedestrian', 'Hero', 'Cyclist', 'Tram', 'Misc', 'DontCare']
-dataset = 'lidar'
+dataset = 'point16'
 file_id = f'000004'
 
 LABEL_COLORS = np.array([
@@ -46,7 +46,7 @@ if __name__ == '__main__':
   # load point clouds
   scan_dir = f'data\\{dataset}\\{file_id}.npy'
   scan = np.load(scan_dir)
-
+  print(np.shape(scan))
   # load labels
   label_dir = f'data\\label3\\{file_id}.txt'
   with open(label_dir, 'r') as f:

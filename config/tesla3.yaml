@@ -4,124 +4,29 @@ MAP: Town04_Opt
 
 HERO_VEHICLE: vehicle.tesla.model3
 
-NUM_OF_ENV_VEHICLES: 200
+NUM_OF_ENV_VEHICLES: 0
 
-TOTAL_TIMESTAMPS: 2000
+TOTAL_TIMESTAMPS: 10
 
 SAVE_INTERVAL: 10
 
 SENSOR_GROUP_LIST:
     - NAME: point16
       TYPE: lidar_group
-      SEMANTIC: False
       SENSOR_GROUP: 
           - TYPE: lidar.ray_cast
             SETUP: {
-                range: '150', 
-                points_per_second: '576000',
+                range: '120', 
+                points_per_second: '7300000',
                 rotation_frequency: '20', 
-                channels: '128',
+                channels: '64',
                 upper_fov: '12.5',
                 lower_fov: '-12.5',
-                horizontal_fov: '120.0'
+                horizontal_fov: '360.0'
             }
             TRANSFORM: {
                 x: 0.4,
                 y: 0.0,
-                z: 1.35,
+                z: 2,
                 yaw: 0.0
             }
-    
-    - NAME: point06
-      TYPE: lidar_group
-      SEMANTIC: False
-      SENSOR_GROUP:
-          - TYPE: lidar.ray_cast
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 2.0,
-                y: 0.7,
-                z: 0.7,
-                yaw: 30.0
-            }
-
-          - TYPE: lidar.ray_cast
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 2.0,
-                y: -0.7,
-                z: 0.7,
-                yaw: -30.0
-            }
-
-    - NAME: point04
-      TYPE: lidar_group
-      SEMANTIC: False
-      SENSOR_GROUP: 
-          - TYPE: lidar.ray_cast
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 2.3,
-                y: 0.0,
-                z: 0.6,
-                yaw: 0.0
-            }
-
-          - TYPE: lidar.ray_cast
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 1.0,
-                y: -1.0,
-                z: 0.6,
-                yaw: -90.0
-            }
-
-          - TYPE: lidar.ray_cast
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 1.0,
-                y: 1.0,
-                z: 0.6,
-                yaw: 90.0
-            }
-

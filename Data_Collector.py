@@ -5,6 +5,8 @@ import numpy as np
 import os
 import logging
 import utils
+import fisheye_utils
+import cv2
 
 '''
 Data collector for collecting point clouds of 
@@ -118,6 +120,38 @@ class DataCollector:
             path = os.path.join(self.data_save_path, sensor_group["NAME"])
             if not os.path.exists(path):
                 os.mkdir(path)
+            ################# Special Setup for Fisheye #################
+            def set_sensors_fisheye(sensor_group, batch):
+                sensor_transform = sensor_group['TRANSFORM']
+                location = carla.Location(x = sensor_transform.get('x', 0), y = sensor_transform.get('y', 0), z = sensor_transform.get('z', 0))
+
+                roll = sensor_transform.get('roll', 0)
+                pitch = sensor_transform.get('pitch', 0)
+                yaw = sensor_transform.get('yaw', 0)
+
+                sensor_bp = self.world.get_blueprint_library().find('sensor.camera.rgb')
+                for key, value in sensor_group['SETUP'].items():
+                    sensor_bp.set_attribute(key, value)
+                sensor_bp.set_attribute('sensor_tick', '0.05')
+
+                transformL = carla.Transform(location, carla.Rotation(yaw = yaw - 90, pitch = pitch, roll = roll))
+                batch.append(SpawnActor(sensor_bp, transformL, parent=self.hero_vehicle))
+
+                transformR = carla.Transform(location, carla.Rotation(yaw = yaw + 90, pitch = pitch, roll = roll))
+                batch.append(SpawnActor(sensor_bp, transformR, parent=self.hero_vehicle))
+
+                transformT = carla.Transform(location, carla.Rotation(yaw = yaw, pitch = pitch + 90, roll = roll))
+                batch.append(SpawnActor(sensor_bp, transformT, parent=self.hero_vehicle))
+
+                transformB = carla.Transform(location, carla.Rotation(yaw = yaw, pitch = pitch - 90, roll = roll))
+                batch.append(SpawnActor(sensor_bp, transformB, parent=self.hero_vehicle))
+
+                transformF = carla.Transform(location, carla.Rotation(yaw = yaw, pitch = pitch, roll = roll))
+                batch.append(SpawnActor(sensor_bp, transformF, parent=self.hero_vehicle))
+
+            if sensor_group["TYPE"] == "camera_fisheye":
+                set_sensors_fisheye(sensor_group, batch)
+                continue
 
             for sensor in sensor_group['SENSOR_GROUP']:
                 sensor_bp = self.world.get_blueprint_library().find('sensor.%s'%(sensor['TYPE']))
@@ -126,7 +160,7 @@ class DataCollector:
                 sensor_bp.set_attribute('sensor_tick', '0.05')
 
                 sensor_transform = sensor['TRANSFORM']
-                transform = carla.Transform(carla.Location(x = sensor_transform.get('x', 0), y = sensor_transform.get('y', 0), z = sensor_transform.get('z', 0)), carla.Rotation(yaw = sensor_transform.get('yaw', 0)))
+                transform = carla.Transform(carla.Location(x = sensor_transform.get('x', 0), y = sensor_transform.get('y', 0), z = sensor_transform.get('z', 0)), carla.Rotation(roll = sensor_transform.get('roll', 0), pitch = sensor_transform.get('pitch', 0), yaw = sensor_transform.get('yaw', 0)))
             
                 batch.append(SpawnActor(sensor_bp, transform, parent=self.hero_vehicle))
 
@@ -176,7 +210,7 @@ class DataCollector:
         self.client.apply_batch_sync(batch, True)
         self.logger.info(f'num of environment vehicles after filtering: {len(self.env_vehicles)}')
 
-    def _retrieve_data(self, sensor_queue, timeout = 2.0):
+    def _retrieve_data(self, sensor_queue, timeout = 10.0):
         while True:
             data_origin = sensor_queue.get(timeout=timeout)
             if data_origin.frame == self.frame:
@@ -229,7 +263,7 @@ class DataCollector:
                 point = point.astype(np.float32)
 
             else:
-                np.frombuffer(data, dtype=np.float32).reshape(-1, 4).copy()
+                point = np.frombuffer(data, dtype=np.float32).reshape(-1, 4).copy()
                 
             point = utils.transform_points_to_reference(point, transform, reference_transform)
             if len(point_merged) == 0:
@@ -248,7 +282,7 @@ class DataCollector:
     def start_collecting(self):
         
         self.client = carla.Client(CLIENT_HOST, CLIENT_PORT)
-        self.client.set_timeout(20.0)
+        self.client.set_timeout(50.0)
 
         self.world = self.client.load_world(self.map)
         self.world.unload_map_layer(carla.MapLayer.ParkedVehicles) # remove parked vehicles
@@ -307,11 +341,18 @@ class DataCollector:
                         
                         np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
 
-                    elif sensor_group["TYPE"] == 'camera_rgb':
-                        data = data_total[0]
-                        data_total = data_total[1:]
+                    elif sensor_group["TYPE"] == 'camera_fisheye':
+                        num_cameras = 5
+                        data_group = data_total[:num_cameras]
+                        data_total = data_total[num_cameras:]
+                        
+                        PicSize = sensor_group["PicSize"]
+                        FishSize = sensor_group["FishSize"]
+                        FOV = sensor_group["FOV"]
+                        picture_group = [np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (PicSize, PicSize, 4))[:, :, :3][:, :, ::-1] for data in data_group]
 
-                        data.save_to_disk(os.path.join(save_path, "%06d"%(time_stamp)))
+                        fisheye_picture = fisheye_utils.cube2fisheye(picture_group, PicSize, FishSize, FOV)
+                        cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), fisheye_picture)
                 
                 ##################### 3D bboxes labels #######################
                 if self.save_lidar_labels:
