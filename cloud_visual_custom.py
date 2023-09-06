@@ -4,8 +4,8 @@ import mayavi.mlab as mlab   #使用mayavi进行3D点云的可视化
 
 colors = sns.color_palette('Paired', 9 * 2)
 names = ['Car', 'Van', 'Truck', 'Pedestrian', 'Hero', 'Cyclist', 'Tram', 'Misc', 'DontCare']
-dataset = 'point16'
-file_id = f'000004'
+dataset = 'lidar'
+file_id = f'000001'
 
 LABEL_COLORS = np.array([
     (255, 255, 255), # None

@@ -2,7 +2,7 @@ import numpy as np
 import open3d as o3d   
 
 dataset = 'lidar'
-file_id = f'000004'
+file_id = f'000002'
 
 LABEL_COLORS = np.array([
         (  0,   0,   0),   # unlabeled     =   0u

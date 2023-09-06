@@ -156,8 +156,6 @@ def cube2fisheye(picture_group, PicSize, FishSize, FOV):
     cubemap[0:PicSize, PicSize:2*PicSize] = tPic
     cubemap[2*PicSize:3*PicSize, PicSize:2*PicSize] = bPic
     
-    cv2.imwrite(".\\xxx.png", cubemap)
-
     fisheye_picture = np.zeros((FishSize,FishSize,3))
     fov = FOV*np.pi/180
     r, phi = get_spherical_coordinates(FishSize)

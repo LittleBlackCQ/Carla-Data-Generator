@@ -1,14 +1,33 @@
+## DATA_SAVE_PATH: Path for saving data. ##
 DATA_SAVE_PATH: data
 
+## MAP: Choice of map in CARLA. 
+## If you want to use customized map, see CARLA official website for instruction.  
 MAP: Town04_Opt
 
+## HERO_VEHICLE: Choose a CARLA vehicle model for your hero vehicle.
 HERO_VEHICLE: vehicle.tesla.model3
 
+## NUM_OF_ENV_VEHICLES: Num of vehicles placed in the whole map.
 NUM_OF_ENV_VEHICLES: 0
 
+## TOTAL_TIMESTAMPS: Total frames you want get.
 TOTAL_TIMESTAMPS: 10
 
+## SAVE_INTERVAL: A frame is saved in how many frames are collected.
 SAVE_INTERVAL: 10
+
+## START_TIMESTAMP: You can start from any frame to complete the collection.
+START_TIMESTAMP: 0
+
+## SENSOR_GROUP_LIST: 
+## Sensor group list is the core parameter for data collection.
+## Every type of data you want to save is considered as a sensor group;
+## The sensor is called group because sometimes you need more than one LiDAR to collect one frame of point cloud, where you should merge the point clouds into one coordinites.
+## A dir named NAME of a sensor group is made in DATA_SAVE_PATH before data collection.
+## The TYPE defines the type of this sensor group. Now, only "lidar_group" and "camera_fisheye" are allowed in this code.
+## SENSOR_GROUP is only used for multiple point clouds merged together.
+## SETUP any parameters for one sensor. TRANSFORM is the relative position compared to hero vehicle.
 
 SENSOR_GROUP_LIST:
     - NAME: point16
