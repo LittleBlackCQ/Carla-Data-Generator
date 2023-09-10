@@ -1,122 +1,51 @@
+## DATA_SAVE_PATH: Path for saving data. ##
 DATA_SAVE_PATH: data
 
+## MAP: Choice of map in CARLA. 
+## If you want to use customized map, see CARLA official website for instruction.  
 MAP: Town04_Opt
 
+## HERO_VEHICLE: Choose a CARLA vehicle model for your hero vehicle.
 HERO_VEHICLE: vehicle.tesla.model3
 
-NUM_OF_ENV_VEHICLES: 200
+## NUM_OF_ENV_VEHICLES: Num of vehicles placed in the whole map.
+NUM_OF_ENV_VEHICLES: 0
 
-TOTAL_TIMESTAMPS: 2000
+## TOTAL_TIMESTAMPS: Total frames you want get.
+TOTAL_TIMESTAMPS: 10
 
+## SAVE_INTERVAL: A frame is saved in how many frames are collected.
 SAVE_INTERVAL: 10
 
-LIDAR_GROUP_LIST:
-    - NAME: one_lidar_on_head_16
-      LIDARS: 
-          - NAME: head_center_lidar
+## START_TIMESTAMP: You can start from any frame to complete the collection.
+START_TIMESTAMP: 0
+
+## SENSOR_GROUP_LIST: 
+## Sensor group list is the core parameter for data collection.
+## Every type of data you want to save is considered as a sensor group;
+## The sensor is called group because sometimes you need more than one LiDAR to collect one frame of point cloud, where you should merge the point clouds into one coordinites.
+## A dir named NAME of a sensor group is made in DATA_SAVE_PATH before data collection.
+## The TYPE defines the type of this sensor group. Now, only "lidar_group" and "camera_fisheye" are allowed in this code.
+## SENSOR_GROUP is only used for multiple point clouds merged together.
+## SETUP any parameters for one sensor. TRANSFORM is the relative position compared to hero vehicle.
+
+SENSOR_GROUP_LIST:
+    - NAME: point16
+      TYPE: lidar_group
+      SENSOR_GROUP: 
+          - TYPE: lidar.ray_cast
             SETUP: {
-                range: '150', 
-                points_per_second: '576000',
+                range: '120', 
+                points_per_second: '7300000',
                 rotation_frequency: '20', 
-                channels: '128',
+                channels: '64',
                 upper_fov: '12.5',
                 lower_fov: '-12.5',
-                horizontal_fov: '120.0'
+                horizontal_fov: '360.0'
             }
             TRANSFORM: {
                 x: 0.4,
                 y: 0.0,
-                z: 1.35,
+                z: 2,
                 yaw: 0.0
             }
-            REFERENCE_LIDAR: True
-    
-    - NAME: two_lidars_on_light_06
-      LIDARS:
-          - NAME: light_left_side_lidar
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 2.0,
-                y: 0.7,
-                z: 0.7,
-                yaw: 30.0
-            }
-
-          - NAME: light_right_side_lidar
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 2.0,
-                y: -0.7,
-                z: 0.7,
-                yaw: -30.0
-            }
-
-    - NAME: three_lidars_on_bumper_04
-      LIDARS: 
-          - NAME: bumper_left_side_lidar
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 2.3,
-                y: 0.0,
-                z: 0.6,
-                yaw: 0.0
-            }
-
-          - NAME: bumper_right_side_lidar
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 1.0,
-                y: -1.0,
-                z: 0.6,
-                yaw: -90.0
-            }
-
-          - NAME: bumper_center_lidar
-            SETUP: {
-                range: '150', 
-                points_per_second: '576000',
-                rotation_frequency: '20', 
-                channels: '128',
-                upper_fov: '12.5',
-                lower_fov: '-12.5',
-                horizontal_fov: '120.0'
-            }
-            TRANSFORM: {
-                x: 1.0,
-                y: 1.0,
-                z: 0.6,
-                yaw: 90.0
-            }
-

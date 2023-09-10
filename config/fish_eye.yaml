@@ -1,0 +1,100 @@
+DATA_SAVE_PATH: data
+
+MAP: Town04_Opt
+
+HERO_VEHICLE: vehicle.tesla.model3
+
+SAVE_INTERVAL: 5
+
+NUM_OF_ENV_VEHICLES: 19
+
+SENSOR_GROUP_LIST:
+    - NAME: lidar
+      TYPE: lidar_group
+      SEMANTIC: True
+      SENSOR_GROUP: 
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 25,
+                y: 25,
+                z: 3,
+            }
+
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: -25,
+                y: 25,
+                z: 3,
+            }
+    
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 25,
+                y: -25,
+                z: 3,
+            }
+
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: -25,
+                y: -25,
+                z: 3,
+            }
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 0,
+                y: 0,
+                z: 3,
+            }
+
+    - NAME: fisheye
+      TYPE: camera_fisheye
+      PicSize: 1024
+      FishSize: 1344
+      FOV: 196
+      SETUP: {
+          image_size_x: '1024',
+          image_size_y: '1024',
+          fov: '90',
+      }
+      TRANSFORM: {
+          x: 3,
+          y: 0,
+          z: 1.5,
+      }
+      

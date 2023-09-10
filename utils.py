@@ -2,6 +2,7 @@ import yaml
 import logging 
 import datetime
 import os
+import numpy as np
 
 def config_from_yaml(config_file):
     if config_file == None:
@@ -30,3 +31,29 @@ def create_logger(log_dir='log'):
     logger.propagate = False
 
     return logger
+
+def transform_points_to_reference(point, local_transform, reference_transform):
+    cords = point[:, :4].copy()
+    cords[:, -1] = 1
+    local_sensor_to_world = local_transform.get_matrix()
+    world_to_reference_sensor = reference_transform.get_inverse_matrix()
+    cords = np.dot(np.dot(world_to_reference_sensor, local_sensor_to_world), cords.T).T
+    point[:, :3] = cords[:, :3]
+    point[:, 1] = - point[:, 1]
+    return point
+
+def actor2type(actor):
+    CYCLIST = ['vehicle.bh.crossbike',
+                'vehicle.diamondback.century',
+                'vehicle.harley-davidson.low_rider',
+                'vehicle.gazelle.omafiets',
+                'vehicle.kawasaki.ninja',
+                'vehicle.yamaha.yzf']
+    if actor.type_id.startswith('walker'):
+        return 'Pedestrian'
+    elif actor.bounding_box.extent.x >= 4:
+        return 'Truck'
+    elif actor.type_id in CYCLIST:
+        return 'Cyclist'
+    else:
+        return 'Car'

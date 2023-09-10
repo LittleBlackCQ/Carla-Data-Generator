@@ -8,14 +8,16 @@ NUM_OF_ENV_VEHICLES: 300
 
 TOTAL_TIMESTAMPS: 20
 
-START_TIMESTAMP: 3600
+START_TIMESTAMP: 0
 
 SAVE_INTERVAL: 10
 
-LIDAR_GROUP_LIST:
+SENSOR_GROUP_LIST:
     - NAME: one_lidar_18
-      LIDARS: 
+      TYPE: lidar_group
+      SENSOR_GROUP: 
           - NAME: head_center_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '1228800',
@@ -34,8 +36,10 @@ LIDAR_GROUP_LIST:
             REFERENCE_LIDAR: True
     
     - NAME: one_lidar_10
-      LIDARS:
+      TYPE: lidar_group
+      SENSOR_GROUP:
           - NAME: mid_center_lidar
+            TYPE: lidar.ray_cast
             SETUP: {
                 range: '150', 
                 points_per_second: '1228800',
@@ -53,8 +57,15 @@ LIDAR_GROUP_LIST:
             }
 
     - NAME: one_lidar_05
+<<<<<<< HEAD
       LIDARS: 
           - NAME: bottom_center_lidar
+=======
+      TYPE: lidar_group
+      SENSOR_GROUP: 
+          - NAME: bottom_center_lidar
+            TYPE: lidar.ray_cast
+>>>>>>> fish
             SETUP: {
                 range: '150', 
                 points_per_second: '1228800',

@@ -4,22 +4,58 @@ import mayavi.mlab as mlab   #使用mayavi进行3D点云的可视化
 
 colors = sns.color_palette('Paired', 9 * 2)
 names = ['Car', 'Van', 'Truck', 'Pedestrian', 'Hero', 'Cyclist', 'Tram', 'Misc', 'DontCare']
-dataset = 'one_lidar_05'
-file_id = f'001500'
+dataset = 'lidar'
+file_id = f'000001'
 
+LABEL_COLORS = np.array([
+    (255, 255, 255), # None
+    (70, 70, 70),    # Building
+    (100, 40, 40),   # Fences
+    (55, 90, 80),    # Other
+    (220, 20, 60),   # Pedestrian
+    (153, 153, 153), # Pole
+    (157, 234, 50),  # RoadLines
+    (128, 64, 128),  # Road
+    (244, 35, 232),  # Sidewalk
+    (107, 142, 35),  # Vegetation
+    (0, 0, 142),     # Vehicle
+    (102, 102, 156), # Wall
+    (220, 220, 0),   # TrafficSign
+    (70, 130, 180),  # Sky
+    (81, 0, 81),     # Ground
+    (150, 100, 100), # Bridge
+    (230, 150, 140), # RailTrack
+    (180, 165, 180), # GuardRail
+    (250, 170, 30),  # TrafficLight
+    (110, 190, 160), # Static
+    (170, 120, 50),  # Dynamic
+    (45, 60, 150),   # Water
+    (145, 170, 100), # Terrain
+
+    (250, 170, 30),  # TrafficLight
+    (110, 190, 160), # Static
+    (170, 120, 50),  # Dynamic
+    (45, 60, 150),   # Water
+    (145, 170, 100), # Terrain
+    (145, 170, 100), # Terrain
+]) / 255.0
+
+LABEL_COLORS = LABEL_COLORS.tolist()
 if __name__ == '__main__':
 
   # load point clouds
-  scan_dir = f'data512\\{dataset}\\points\\{file_id}.npy'
+  scan_dir = f'data\\{dataset}\\{file_id}.npy'
   scan = np.load(scan_dir)
-
+  print(np.shape(scan))
   # load labels
-  label_dir = f'data512\\{dataset}\\labels\\{file_id}.txt'
+  label_dir = f'data\\label3\\{file_id}.txt'
   with open(label_dir, 'r') as f:
     labels = f.readlines()
 
   fig = mlab.figure(bgcolor=(0, 0, 0))
   # draw point cloud
+  # color = np.divide(LABEL_COLORS[semantic_label], 255.0)
+  # color = np.take(LABEL_COLORS, semantic_label, axis=0)
   plot = mlab.points3d(scan[:, 0], scan[:, 1], scan[:, 2], mode="point", figure=fig)
 
   for line in labels:
