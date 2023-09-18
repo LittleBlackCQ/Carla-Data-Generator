@@ -120,6 +120,7 @@ class DataCollector:
             path = os.path.join(self.data_save_path, sensor_group["NAME"])
             if not os.path.exists(path):
                 os.mkdir(path)
+            sensor_type = sensor_group["TYPE"]
             ################# Special Setup for Fisheye #################
             def set_sensors_fisheye(sensor_group, batch):
                 sensor_transform = sensor_group['TRANSFORM']
@@ -130,8 +131,7 @@ class DataCollector:
                 yaw = sensor_transform.get('yaw', 0)
 
                 sensor_bp = self.world.get_blueprint_library().find('sensor.camera.rgb')
-                for key, value in sensor_group['SETUP'].items():
-                    sensor_bp.set_attribute(key, value)
+                utils.set_sensor_setups(sensor_bp, sensor_group['SETUP'])
                 sensor_bp.set_attribute('sensor_tick', '0.05')
 
                 transformL = carla.Transform(location, carla.Rotation(yaw = yaw - 90, pitch = pitch, roll = roll))
@@ -149,20 +149,22 @@ class DataCollector:
                 transformF = carla.Transform(location, carla.Rotation(yaw = yaw, pitch = pitch, roll = roll))
                 batch.append(SpawnActor(sensor_bp, transformF, parent=self.hero_vehicle))
 
-            if sensor_group["TYPE"] == "camera_fisheye":
+            if sensor_type == "camera_fisheye":
                 set_sensors_fisheye(sensor_group, batch)
-                continue
-
-            for sensor in sensor_group['SENSOR_GROUP']:
-                sensor_bp = self.world.get_blueprint_library().find('sensor.%s'%(sensor['TYPE']))
-                for key, value in sensor['SETUP'].items():
-                    sensor_bp.set_attribute(key, value)
-                sensor_bp.set_attribute('sensor_tick', '0.05')
-
-                sensor_transform = sensor['TRANSFORM']
-                transform = carla.Transform(carla.Location(x = sensor_transform.get('x', 0), y = sensor_transform.get('y', 0), z = sensor_transform.get('z', 0)), carla.Rotation(roll = sensor_transform.get('roll', 0), pitch = sensor_transform.get('pitch', 0), yaw = sensor_transform.get('yaw', 0)))
             
+            elif sensor_type == "camera":
+                sensor_bp = self.world.get_blueprint_library().find('sensor.camera.%s'%(sensor_group['CAMTYPE']))
+                utils.set_sensor_setups(sensor_bp, sensor_group['SETUP'])
+                transform = utils.set_sensor_transform(sensor_group['TRANSFORM'])
                 batch.append(SpawnActor(sensor_bp, transform, parent=self.hero_vehicle))
+
+            elif sensor_type == "lidar_group":
+                for sensor in sensor_group['SENSOR_GROUP']:
+                    sensor_bp = self.world.get_blueprint_library().find('sensor.%s'%(sensor['TYPE']))
+                    utils.set_sensor_setups(sensor_bp, sensor['SETUP'])
+                    transform = utils.set_sensor_transform(sensor['TRANSFORM'])
+                    
+                    batch.append(SpawnActor(sensor_bp, transform, parent=self.hero_vehicle))
 
         for response in self.client.apply_batch_sync(batch, True):
             if response.error:
@@ -353,7 +355,13 @@ class DataCollector:
 
                         fisheye_picture = fisheye_utils.cube2fisheye(picture_group, PicSize, FishSize, FOV)
                         cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), fisheye_picture)
-                
+
+                    elif sensor_group["TYPE"] == 'camera':
+                        data = data_total.pop(0)
+                        image = np.frombuffer(data.raw_data, dtype=np.dtype("uint8"))
+                        image = np.reshape(image, (data.height, data.width, 4))[:, :, :3][:, :, ::-1]
+                        cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), image)
+
                 ##################### 3D bboxes labels #######################
                 if self.save_lidar_labels:
                     save_path = os.path.join(self.data_save_path, "label3")

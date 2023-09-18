@@ -1,0 +1,100 @@
+DATA_SAVE_PATH: data
+
+MAP: Town02_Opt
+
+HERO_VEHICLE: vehicle.yamaha.yzf
+
+TOTAL_TIMESTAMPS: 10
+
+SAVE_INTERVAL: 10
+
+NUM_OF_ENV_VEHICLES: 100
+
+SENSOR_GROUP_LIST:
+    - NAME: cam_front
+      TYPE: camera
+      CAMTYPE: rgb
+      3DBBox: True
+      SETUP: {
+          image_size_x: '320',
+          image_size_y: '320',
+          fov: '100',
+      }
+      TRANSFORM: {
+          x: 3,
+          y: 0,
+          z: 1.5,
+      }
+
+    - NAME: lidar_semantic
+      TYPE: lidar_group
+      SEMANTIC: True
+      SENSOR_GROUP: 
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 25,
+                y: 25,
+                z: 3,
+            }
+
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: -25,
+                y: 25,
+                z: 3,
+            }
+    
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 25,
+                y: -25,
+                z: 3,
+            }
+
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: -25,
+                y: -25,
+                z: 3,
+            }
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 0,
+                y: 0,
+                z: 3,
+            }
