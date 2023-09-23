@@ -14,7 +14,6 @@ SENSOR_GROUP_LIST:
     - NAME: cam_front
       TYPE: camera
       CAMTYPE: rgb
-      3DBBox: True
       SETUP: {
           image_size_x: '1600',
           image_size_y: '960',
@@ -29,7 +28,6 @@ SENSOR_GROUP_LIST:
     - NAME: cam_front_right
       TYPE: camera
       CAMTYPE: rgb
-      3DBBox: True
       SETUP: {
           image_size_x: '1600',
           image_size_y: '960',
@@ -46,7 +44,6 @@ SENSOR_GROUP_LIST:
     - NAME: cam_front_left
       TYPE: camera
       CAMTYPE: rgb
-      3DBBox: True
       SETUP: {
           image_size_x: '1600',
           image_size_y: '960',
@@ -62,7 +59,6 @@ SENSOR_GROUP_LIST:
     - NAME: cam_back_right
       TYPE: camera
       CAMTYPE: rgb
-      3DBBox: True
       SETUP: {
           image_size_x: '1600',
           image_size_y: '960',
@@ -79,7 +75,6 @@ SENSOR_GROUP_LIST:
     - NAME: cam_back_left
       TYPE: camera
       CAMTYPE: rgb
-      3DBBox: True
       SETUP: {
           image_size_x: '1600',
           image_size_y: '960',
@@ -92,81 +87,100 @@ SENSOR_GROUP_LIST:
           yaw: -144,
       }
     
-    - NAME: lidar_semantic
-      TYPE: lidar_group
-      SEMANTIC: True
-      SENSOR_GROUP: 
-          - TYPE: lidar.ray_cast_semantic
-            SETUP: {
-                range: '150', 
-                points_per_second: '1228800',
-                rotation_frequency: '20', 
-                upper_fov: '0', 
-                lower_fov: '-90',
-                channels: '128',
-            }
-            TRANSFORM: {
-                x: 0,
-                y: 0,
-                z: 6,
-            }
-          - TYPE: lidar.ray_cast_semantic
-            SETUP: {
-                range: '150', 
-                points_per_second: '1228800',
-                rotation_frequency: '20', 
-                upper_fov: '0', 
-                lower_fov: '-90',
-                channels: '128',
-            }
-            TRANSFORM: {
-                x: 30,
-                y: 30,
-                z: 6,
-            }
+    - NAME: cam_semantic
+      TYPE: camera
+      CAMTYPE: semantic_segmentation
+      BINARY:
+        - name: 'road'
+          id: 1
+        - name: 'roadline'
+          id: 2
+      SETUP: {
+          image_size_x: '256',
+          image_size_y: '256',
+          fov: '90',
+      }
+      TRANSFORM: {
+          x: 0,
+          y: 0,
+          z: 30,
+          pitch: -90,
+      }
+    # - NAME: lidar_semantic
+    #   TYPE: lidar_group
+    #   SEMANTIC: True
+    #   SENSOR_GROUP: 
+    #       - TYPE: lidar.ray_cast_semantic
+    #         SETUP: {
+    #             range: '150', 
+    #             points_per_second: '122880',
+    #             rotation_frequency: '20', 
+    #             upper_fov: '0', 
+    #             lower_fov: '-90',
+    #             channels: '96',
+    #         }
+    #         TRANSFORM: {
+    #             x: 0,
+    #             y: 0,
+    #             z: 6,
+    #         }
+    #       - TYPE: lidar.ray_cast_semantic
+    #         SETUP: {
+    #             range: '150', 
+    #             points_per_second: '122880',
+    #             rotation_frequency: '20', 
+    #             upper_fov: '0', 
+    #             lower_fov: '-90',
+    #             channels: '96',
+    #         }
+    #         TRANSFORM: {
+    #             x: 30,
+    #             y: 30,
+    #             z: 6,
+    #         }
 
-          - TYPE: lidar.ray_cast_semantic
-            SETUP: {
-                range: '150', 
-                points_per_second: '1228800',
-                rotation_frequency: '20', 
-                upper_fov: '0', 
-                lower_fov: '-90',
-                channels: '128',
-            }
-            TRANSFORM: {
-                x: -30,
-                y: 30,
-                z: 6,
-            }
+    #       - TYPE: lidar.ray_cast_semantic
+    #         SETUP: {
+    #             range: '150', 
+    #             points_per_second: '122880',
+    #             rotation_frequency: '20', 
+    #             upper_fov: '0', 
+    #             lower_fov: '-90',
+    #             channels: '96',
+    #         }
+    #         TRANSFORM: {
+    #             x: -30,
+    #             y: 30,
+    #             z: 6,
+    #         }
     
-          - TYPE: lidar.ray_cast_semantic
-            SETUP: {
-                range: '150', 
-                points_per_second: '1228800',
-                rotation_frequency: '20', 
-                upper_fov: '0', 
-                lower_fov: '-90',
-                channels: '128',
-            }
-            TRANSFORM: {
-                x: 30,
-                y: -30,
-                z: 6,
-            }
+    #       - TYPE: lidar.ray_cast_semantic
+    #         SETUP: {
+    #             range: '150', 
+    #             points_per_second: '122880',
+    #             rotation_frequency: '20', 
+    #             upper_fov: '0', 
+    #             lower_fov: '-90',
+    #             channels: '96',
+    #         }
+    #         TRANSFORM: {
+    #             x: 30,
+    #             y: -30,
+    #             z: 6,
+    #         }
 
-          - TYPE: lidar.ray_cast_semantic
-            SETUP: {
-                range: '150', 
-                points_per_second: '1228800',
-                rotation_frequency: '20', 
-                upper_fov: '0', 
-                lower_fov: '-90',
-                channels: '128',
-            }
-            TRANSFORM: {
-                x: -30,
-                y: -30,
-                z: 6,
-            }
+    #       - TYPE: lidar.ray_cast_semantic
+    #         SETUP: {
+    #             range: '150', 
+    #             points_per_second: '122880',
+    #             rotation_frequency: '20', 
+    #             upper_fov: '0', 
+    #             lower_fov: '-90',
+    #             channels: '96',
+    #         }
+    #         TRANSFORM: {
+    #             x: -30,
+    #             y: -30,
+    #             z: 6,
+    #         }
           

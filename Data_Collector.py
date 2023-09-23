@@ -344,6 +344,8 @@ class DataCollector:
                         np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
 
                     elif sensor_group["TYPE"] == 'camera_fisheye':
+                        if reference_sensor_transform == None:
+                            reference_sensor_transform = data_total[0].transform
                         num_cameras = 5
                         data_group = data_total[:num_cameras]
                         data_total = data_total[num_cameras:]
@@ -357,10 +359,14 @@ class DataCollector:
                         cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), fisheye_picture)
 
                     elif sensor_group["TYPE"] == 'camera':
+                        if reference_sensor_transform == None:
+                            reference_sensor_transform = data_total[0].transform
                         data = data_total.pop(0)
-                        image = np.frombuffer(data.raw_data, dtype=np.dtype("uint8"))
-                        image = np.reshape(image, (data.height, data.width, 4))[:, :, :3][:, :, ::-1]
-                        cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), image)
+                        if sensor_group["CAMTYPE"] == "rgb":
+                            data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)))
+                        else:
+                            image = np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (sensor_group["SETUP"]["image_size_x"], sensor_group["SETUP"]["image_size_y"], 4))[:, :, :3][:, :, ::-1] 
+                            data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)),carla.ColorConverter.CityScapesPalette)
 
                 ##################### 3D bboxes labels #######################
                 if self.save_lidar_labels:

@@ -1,7 +1,7 @@
 import numpy as np
 import open3d as o3d   
 
-dataset = 'lidar'
+dataset = 'lidar_semantic'
 file_id = f'000002'
 
 LABEL_COLORS = np.array([
@@ -44,6 +44,19 @@ if __name__ == '__main__':
     scan_dir = f'data\\{dataset}\\{file_id}.npy'
     scan = np.load(scan_dir)
 
+
+    label_dir = f'data\\label3\\{file_id}.txt'
+    with open(label_dir, 'r') as f:
+        labels = f.readlines()
+
+    ego_coords = list(map(float, labels[-1].split()[:2]))
+    scan[:, :2] = scan[:, :2] - ego_coords
+
+    pedestrian = scan[scan[:, -1].astype(np.int32) == 13]
+    print(pedestrian)
+
+    index = np.all((scan[:, :2] > -50) & np.array(scan[:, :2] < 50), axis=1)
+    scan = scan[index, :]
 
     point_cloud = o3d.geometry.PointCloud()
 
