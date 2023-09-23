@@ -1,6 +1,6 @@
 DATA_SAVE_PATH: data
 
-MAP: Town02_Opt
+MAP: Town03_Opt
 
 HERO_VEHICLE: vehicle.yamaha.yzf
 
@@ -16,16 +16,82 @@ SENSOR_GROUP_LIST:
       CAMTYPE: rgb
       3DBBox: True
       SETUP: {
-          image_size_x: '320',
-          image_size_y: '320',
+          image_size_x: '1280',
+          image_size_y: '1024',
           fov: '100',
       }
       TRANSFORM: {
-          x: 3,
+          x: 1.3,
           y: 0,
           z: 1.5,
       }
 
+    - NAME: cam_front_right
+      TYPE: camera
+      CAMTYPE: rgb
+      3DBBox: True
+      SETUP: {
+          image_size_x: '1280',
+          image_size_y: '1024',
+          fov: '100',
+      }
+      TRANSFORM: {
+          x: 0.4,
+          y: 1.24,
+          z: 1.5,
+          yaw: 72,
+      }
+
+
+    - NAME: cam_front_left
+      TYPE: camera
+      CAMTYPE: rgb
+      3DBBox: True
+      SETUP: {
+          image_size_x: '1280',
+          image_size_y: '1024',
+          fov: '100',
+      }
+      TRANSFORM: {
+          x: 0.4,
+          y: -1.24,
+          z: 1.5,
+          yaw: -72,
+      }
+    
+    - NAME: cam_back_right
+      TYPE: camera
+      CAMTYPE: rgb
+      3DBBox: True
+      SETUP: {
+          image_size_x: '1280',
+          image_size_y: '1024',
+          fov: '100',
+      }
+      TRANSFORM: {
+          x: -1.05,
+          y: 0.76,
+          z: 1.5,
+          yaw: 144,
+      }
+
+
+    - NAME: cam_back_left
+      TYPE: camera
+      CAMTYPE: rgb
+      3DBBox: True
+      SETUP: {
+          image_size_x: '1280',
+          image_size_y: '1024',
+          fov: '100',
+      }
+      TRANSFORM: {
+          x: -1.05,
+          y: -0.76,
+          z: 1.5,
+          yaw: -144,
+      }
+    
     - NAME: lidar_semantic
       TYPE: lidar_group
       SEMANTIC: True
