@@ -1,6 +1,6 @@
 DATA_SAVE_PATH: data
 
-MAP: Town03_Opt
+MAP: Town05_Opt
 
 HERO_VEHICLE: vehicle.yamaha.yzf
 
@@ -16,8 +16,8 @@ SENSOR_GROUP_LIST:
       CAMTYPE: rgb
       3DBBox: True
       SETUP: {
-          image_size_x: '1280',
-          image_size_y: '1024',
+          image_size_x: '1600',
+          image_size_y: '960',
           fov: '100',
       }
       TRANSFORM: {
@@ -31,8 +31,8 @@ SENSOR_GROUP_LIST:
       CAMTYPE: rgb
       3DBBox: True
       SETUP: {
-          image_size_x: '1280',
-          image_size_y: '1024',
+          image_size_x: '1600',
+          image_size_y: '960',
           fov: '100',
       }
       TRANSFORM: {
@@ -48,8 +48,8 @@ SENSOR_GROUP_LIST:
       CAMTYPE: rgb
       3DBBox: True
       SETUP: {
-          image_size_x: '1280',
-          image_size_y: '1024',
+          image_size_x: '1600',
+          image_size_y: '960',
           fov: '100',
       }
       TRANSFORM: {
@@ -64,8 +64,8 @@ SENSOR_GROUP_LIST:
       CAMTYPE: rgb
       3DBBox: True
       SETUP: {
-          image_size_x: '1280',
-          image_size_y: '1024',
+          image_size_x: '1600',
+          image_size_y: '960',
           fov: '100',
       }
       TRANSFORM: {
@@ -81,8 +81,8 @@ SENSOR_GROUP_LIST:
       CAMTYPE: rgb
       3DBBox: True
       SETUP: {
-          image_size_x: '1280',
-          image_size_y: '1024',
+          image_size_x: '1600',
+          image_size_y: '960',
           fov: '100',
       }
       TRANSFORM: {
@@ -101,13 +101,28 @@ SENSOR_GROUP_LIST:
                 range: '150', 
                 points_per_second: '1228800',
                 rotation_frequency: '20', 
+                upper_fov: '0', 
                 lower_fov: '-90',
                 channels: '128',
             }
             TRANSFORM: {
-                x: 25,
-                y: 25,
-                z: 3,
+                x: 0,
+                y: 0,
+                z: 6,
+            }
+          - TYPE: lidar.ray_cast_semantic
+            SETUP: {
+                range: '150', 
+                points_per_second: '1228800',
+                rotation_frequency: '20', 
+                upper_fov: '0', 
+                lower_fov: '-90',
+                channels: '128',
+            }
+            TRANSFORM: {
+                x: 30,
+                y: 30,
+                z: 6,
             }
 
           - TYPE: lidar.ray_cast_semantic
@@ -115,13 +130,14 @@ SENSOR_GROUP_LIST:
                 range: '150', 
                 points_per_second: '1228800',
                 rotation_frequency: '20', 
+                upper_fov: '0', 
                 lower_fov: '-90',
                 channels: '128',
             }
             TRANSFORM: {
-                x: -25,
-                y: 25,
-                z: 3,
+                x: -30,
+                y: 30,
+                z: 6,
             }
     
           - TYPE: lidar.ray_cast_semantic
@@ -129,13 +145,14 @@ SENSOR_GROUP_LIST:
                 range: '150', 
                 points_per_second: '1228800',
                 rotation_frequency: '20', 
+                upper_fov: '0', 
                 lower_fov: '-90',
                 channels: '128',
             }
             TRANSFORM: {
-                x: 25,
-                y: -25,
-                z: 3,
+                x: 30,
+                y: -30,
+                z: 6,
             }
 
           - TYPE: lidar.ray_cast_semantic
@@ -143,24 +160,13 @@ SENSOR_GROUP_LIST:
                 range: '150', 
                 points_per_second: '1228800',
                 rotation_frequency: '20', 
+                upper_fov: '0', 
                 lower_fov: '-90',
                 channels: '128',
             }
             TRANSFORM: {
-                x: -25,
-                y: -25,
-                z: 3,
+                x: -30,
+                y: -30,
+                z: 6,
             }
-          - TYPE: lidar.ray_cast_semantic
-            SETUP: {
-                range: '150', 
-                points_per_second: '1228800',
-                rotation_frequency: '20', 
-                lower_fov: '-90',
-                channels: '128',
-            }
-            TRANSFORM: {
-                x: 0,
-                y: 0,
-                z: 3,
-            }
+          
