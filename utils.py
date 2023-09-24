@@ -60,10 +60,12 @@ def actor2type(actor):
     else:
         return 'Car'
 
-def set_sensor_setups(bp, setups, tick="0.05"):
+def set_sensor_setups(bp, setups, iftick = True, tick="0.05"):
     for key, value in setups.items():
         bp.set_attribute(key, value)
-    bp.set_attribute('sensor_tick', tick)
+    
+    if iftick:
+        bp.set_attribute('sensor_tick', tick)
 
 def set_sensor_transform(transform_parameters):
     return carla.Transform(carla.Location(x = transform_parameters.get('x', 0), y = transform_parameters.get('y', 0), z = transform_parameters.get('z', 0)), carla.Rotation(roll = transform_parameters.get('roll', 0), pitch = transform_parameters.get('pitch', 0), yaw = transform_parameters.get('yaw', 0)))

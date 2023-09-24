@@ -24,6 +24,7 @@ class DataCollector:
         self.collector_config = collector_config
         self.map = collector_config.get('MAP', 'Town04_Opt')
         self.hero_vehicle_name = collector_config.get('HERO_VEHICLE', 'vehicle.tesla.model3')
+        self.hero_info = collector_config.get('HERO_INFO', None)
         self.num_of_env_vehicles = collector_config.get('NUM_OF_ENV_VEHICLES', 0)
         self.data_save_path = collector_config.get('DATA_SAVE_PATH', 'data')
         
@@ -65,10 +66,17 @@ class DataCollector:
     
     def set_hero_vehicle(self, set_autopilot=True):
         hero_bp = self.world.get_blueprint_library().find(self.hero_vehicle_name)
-        hero_bp.set_attribute('color', '0, 0, 0') # set hero vehicle color to black
-        hero_bp.set_attribute('role_name', 'autopilot')
 
-        transform = random.choice(self.world.get_map().get_spawn_points())
+        if self.hero_info ==None:
+            setups = {'color': '0, 0, 0', 'role_name': 'autopilot'}
+            transform = random.choice(self.world.get_map().get_spawn_points())
+            
+        else:
+            setups = self.hero_info["SETUP"]
+            transform = utils.set_sensor_transform(self.hero_info["TRANSFORM"])
+
+        utils.set_sensor_setups(hero_bp, setups, iftick = False)
+        
         self.hero_vehicle = self.world.spawn_actor(hero_bp, transform)
 
         if set_autopilot:
@@ -293,113 +301,113 @@ class DataCollector:
 
         traffic_manager = self.client.get_trafficmanager(TRAFFIC_MANAGER_PORT)
         
-        try:
-            self.logger.info('------------------------ Start Generating ------------------------')
+        # try:
+        self.logger.info('------------------------ Start Generating ------------------------')
 
-            self.set_hero_vehicle()
+        self.set_hero_vehicle()
 
-            self.set_env_vehicles()
-            self.filter_vehicles_dont_want()
-        
-            self.set_sensors()
-            self.set_sensor_queue()
+        self.set_env_vehicles()
+        self.filter_vehicles_dont_want()
+    
+        self.set_sensors()
+        self.set_sensor_queue()
 
-            self.set_synchronization_world()
-            self.set_synchronization_traffic_manager(traffic_manager)
+        self.set_synchronization_world()
+        self.set_synchronization_traffic_manager(traffic_manager)
 
-            time_stamp = self.start_timestamp
+        time_stamp = self.start_timestamp
+        interval_index = 0
+
+        while time_stamp < self.total_timestamp + self.start_timestamp:
+            self.frame = self.world.tick()
+
+            self.set_spectator(z=5, pitch=-30) # set spectator for visualization
+            
+            ############################ Get Data ##################################
+
+            data_total = [self._retrieve_data(q) for q in self.sensor_queues]
+            
+            ########################## Check Save Interval ########################
+
+            if self.save_interval != None and (interval_index + 1) != self.save_interval:
+                interval_index += 1
+                continue
+            
             interval_index = 0
 
-            while time_stamp < self.total_timestamp + self.start_timestamp:
-                self.frame = self.world.tick()
+            ############################# Save Data ###########################
+            reference_sensor_transform = None
+            for sensor_group in self.sensor_group_list:
+                save_path = os.path.join(self.data_save_path, sensor_group["NAME"])
+                ################### lidar group #############
+                if sensor_group["TYPE"] == 'lidar_group':
+                    num_lidars = len(sensor_group["SENSOR_GROUP"])
+                    data_group = data_total[:num_lidars]
+                    data_total = data_total[num_lidars:]
 
-                self.set_spectator(z=5, pitch=-30) # set spectator for visualization
-                
-                ############################ Get Data ##################################
+                    if reference_sensor_transform == None:
+                        reference_sensor_transform = data_group[0].transform
 
-                data_total = [self._retrieve_data(q) for q in self.sensor_queues]
-                
-                ########################## Check Save Interval ########################
+                    point_group = [[data.raw_data, data.transform] for data in data_group]
+                    point_merged = self.merge_lidar_group(point_group, reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
+                    
+                    np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
 
-                if self.save_interval != None and (interval_index + 1) != self.save_interval:
-                    interval_index += 1
-                    continue
-                
-                interval_index = 0
+                elif sensor_group["TYPE"] == 'camera_fisheye':
+                    if reference_sensor_transform == None:
+                        reference_sensor_transform = data_total[0].transform
+                    num_cameras = 5
+                    data_group = data_total[:num_cameras]
+                    data_total = data_total[num_cameras:]
+                    
+                    PicSize = sensor_group["PicSize"]
+                    FishSize = sensor_group["FishSize"]
+                    FOV = sensor_group["FOV"]
+                    picture_group = [np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (PicSize, PicSize, 4))[:, :, :3][:, :, ::-1] for data in data_group]
 
-                ############################# Save Data ###########################
-                reference_sensor_transform = None
-                for sensor_group in self.sensor_group_list:
-                    save_path = os.path.join(self.data_save_path, sensor_group["NAME"])
-                    ################### lidar group #############
-                    if sensor_group["TYPE"] == 'lidar_group':
-                        num_lidars = len(sensor_group["SENSOR_GROUP"])
-                        data_group = data_total[:num_lidars]
-                        data_total = data_total[num_lidars:]
+                    fisheye_picture = fisheye_utils.cube2fisheye(picture_group, PicSize, FishSize, FOV)
+                    cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), fisheye_picture)
 
-                        if reference_sensor_transform == None:
-                            reference_sensor_transform = data_group[0].transform
+                elif sensor_group["TYPE"] == 'camera':
+                    if reference_sensor_transform == None:
+                        reference_sensor_transform = data_total[0].transform
+                    data = data_total.pop(0)
+                    if sensor_group["CAMTYPE"] == "rgb":
+                        data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)))
+                    elif sensor_group["CAMTYPE"] == "semantic_segmentation":
+                        binary_infos = sensor_group.get("BINARY")
+                        if binary_infos != None:
+                            image = np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (data.height, data.width, 4))[:, :, :3][:, :, ::-1] 
+                            for binary_info in binary_infos:
+                                utils.save_binary_image(image, binary_info, save_path, time_stamp)
+                        else:
+                            data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)),carla.ColorConverter.CityScapesPalette)
 
-                        point_group = [[data.raw_data, data.transform] for data in data_group]
-                        point_merged = self.merge_lidar_group(point_group, reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
-                        
-                        np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
+            ##################### 3D bboxes labels #######################
+            if self.save_lidar_labels:
+                save_path = os.path.join(self.data_save_path, "label3")
+                if not os.path.exists(save_path):
+                    os.mkdir(save_path)
+                labels = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map())
+                label_hero = self.prepare_labels([self.hero_vehicle], reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
+                labels = np.concatenate((labels, label_hero), axis=0) if len(labels) != 0 else label_hero
 
-                    elif sensor_group["TYPE"] == 'camera_fisheye':
-                        if reference_sensor_transform == None:
-                            reference_sensor_transform = data_total[0].transform
-                        num_cameras = 5
-                        data_group = data_total[:num_cameras]
-                        data_total = data_total[num_cameras:]
-                        
-                        PicSize = sensor_group["PicSize"]
-                        FishSize = sensor_group["FishSize"]
-                        FOV = sensor_group["FOV"]
-                        picture_group = [np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (PicSize, PicSize, 4))[:, :, :3][:, :, ::-1] for data in data_group]
+                np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
 
-                        fisheye_picture = fisheye_utils.cube2fisheye(picture_group, PicSize, FishSize, FOV)
-                        cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), fisheye_picture)
+            self.logger.info(f'Time stamp {time_stamp} saved successfully!')
+            time_stamp += 1
 
-                    elif sensor_group["TYPE"] == 'camera':
-                        if reference_sensor_transform == None:
-                            reference_sensor_transform = data_total[0].transform
-                        data = data_total.pop(0)
-                        if sensor_group["CAMTYPE"] == "rgb":
-                            data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)))
-                        elif sensor_group["CAMTYPE"] == "semantic_segmentation":
-                            binary_infos = sensor_group.get("BINARY")
-                            if binary_infos != None:
-                                image = np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (data.height, data.width, 4))[:, :, :3][:, :, ::-1] 
-                                for binary_info in binary_infos:
-                                    utils.save_binary_image(image, binary_info, save_path, time_stamp)
-                            else:
-                                data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)),carla.ColorConverter.CityScapesPalette)
-
-                ##################### 3D bboxes labels #######################
-                if self.save_lidar_labels:
-                    save_path = os.path.join(self.data_save_path, "label3")
-                    if not os.path.exists(save_path):
-                        os.mkdir(save_path)
-                    labels = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map())
-                    label_hero = self.prepare_labels([self.hero_vehicle], reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
-                    labels = np.concatenate((labels, label_hero), axis=0) if len(labels) != 0 else label_hero
-
-                    np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
-
-                self.logger.info(f'Time stamp {time_stamp} saved successfully!')
-                time_stamp += 1
-
-        except RuntimeError:
-            self.logger.info('Something wrong happened!')
+        # except RuntimeError:
+        #     self.logger.info('Something wrong happened!')
         
-        except KeyboardInterrupt:
-            self.logger.info('Exit by user!')
+        # except KeyboardInterrupt:
+        #     self.logger.info('Exit by user!')
         
-        finally:
-            self.set_synchronization_world(synchronous_mode=False)
-            self.logger.info('------------------- Destroying actors -----------------')
-            self.destroy_actors()
-            self.logger.info('------------------------ Done ------------------------')
+        # finally:
+        #     self.set_synchronization_world(synchronous_mode=False)
+        #     self.logger.info('------------------- Destroying actors -----------------')
+        #     self.destroy_actors()
+        #     self.logger.info('------------------------ Done ------------------------')
 
         
 

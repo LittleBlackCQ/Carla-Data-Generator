@@ -1,0 +1,36 @@
+DATA_SAVE_PATH: data
+
+MAP: Town05_Opt
+
+HERO_VEHICLE: vehicle.yamaha.yzf
+
+TOTAL_TIMESTAMPS: 1
+
+NUM_OF_ENV_VEHICLES: 0
+
+HERO_INFO:
+    SETUP: {
+      color: '0, 0, 0'
+    }
+    TRANSFORM: {
+      x: 0,
+      y: 0,
+      z: 5
+    }
+
+
+SENSOR_GROUP_LIST:
+    - NAME: whole_map_05
+      TYPE: camera
+      CAMTYPE: semantic_segmentation
+      SETUP: {
+          image_size_x: '2560',
+          image_size_y: '2560',
+          fov: '90',
+      }
+      TRANSFORM: {
+          x: -30,
+          y: 0,
+          z: 250,
+          pitch: -90,
+      }
