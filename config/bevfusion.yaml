@@ -1,6 +1,6 @@
 DATA_SAVE_PATH: data
 
-MAP: Town04_Opt
+MAP: Town03_Opt
 
 HERO_VEHICLE: vehicle.yamaha.yzf
 
@@ -15,8 +15,8 @@ SENSOR_GROUP_LIST:
       TYPE: camera
       CAMTYPE: rgb
       SETUP: {
-          image_size_x: '1600',
-          image_size_y: '960',
+          image_size_x: '704',
+          image_size_y: '256',
           fov: '100',
       }
       TRANSFORM: {
@@ -29,8 +29,8 @@ SENSOR_GROUP_LIST:
       TYPE: camera
       CAMTYPE: rgb
       SETUP: {
-          image_size_x: '1600',
-          image_size_y: '960',
+          image_size_x: '704',
+          image_size_y: '256',
           fov: '100',
       }
       TRANSFORM: {
@@ -45,8 +45,8 @@ SENSOR_GROUP_LIST:
       TYPE: camera
       CAMTYPE: rgb
       SETUP: {
-          image_size_x: '1600',
-          image_size_y: '960',
+          image_size_x: '704',
+          image_size_y: '256',
           fov: '100',
       }
       TRANSFORM: {
@@ -60,8 +60,8 @@ SENSOR_GROUP_LIST:
       TYPE: camera
       CAMTYPE: rgb
       SETUP: {
-          image_size_x: '1600',
-          image_size_y: '960',
+          image_size_x: '704',
+          image_size_y: '256',
           fov: '100',
       }
       TRANSFORM: {
@@ -76,8 +76,8 @@ SENSOR_GROUP_LIST:
       TYPE: camera
       CAMTYPE: rgb
       SETUP: {
-          image_size_x: '1600',
-          image_size_y: '960',
+          image_size_x: '704',
+          image_size_y: '256',
           fov: '100',
       }
       TRANSFORM: {
@@ -91,10 +91,12 @@ SENSOR_GROUP_LIST:
       TYPE: camera
       CAMTYPE: semantic_segmentation
       BINARY:
-        - name: 'road'
-          id: 1
-        - name: 'roadline'
-          id: 24
+        - name: 'drivable_area'
+          id: 
+            - 1
+            - 7
+            - 24
+            - 6
         - name: 'sidewalk'
           id: 2
       SETUP: {

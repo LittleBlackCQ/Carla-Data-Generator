@@ -73,7 +73,12 @@ def save_binary_image(image, info, save_path, time_stamp):
     type_id = info["id"]
 
     binary_image = np.zeros(np.shape(image))
-    binary_image[image[:, :, 0].astype(np.int32) == type_id, :] = [255, 255, 255]
+
+    if type(type_id) is list:
+        for i in type_id:
+            binary_image[image[:, :, 0].astype(np.int32) == i, :] = [255, 255, 255]
+    else:
+        binary_image[image[:, :, 0].astype(np.int32) == type_id, :] = [255, 255, 255]
     
     save_path = os.path.join(save_path, type_name)
     if not os.path.exists(save_path):
