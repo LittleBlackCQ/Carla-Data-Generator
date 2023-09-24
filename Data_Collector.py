@@ -288,6 +288,8 @@ class DataCollector:
 
         self.world = self.client.load_world(self.map)
         self.world.unload_map_layer(carla.MapLayer.ParkedVehicles) # remove parked vehicles
+        self.world.unload_map_layer(carla.MapLayer.Foliage)
+        self.world.unload_map_layer(carla.MapLayer.StreetLights)
 
         traffic_manager = self.client.get_trafficmanager(TRAFFIC_MANAGER_PORT)
         
@@ -364,9 +366,14 @@ class DataCollector:
                         data = data_total.pop(0)
                         if sensor_group["CAMTYPE"] == "rgb":
                             data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)))
-                        else:
-                            image = np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (sensor_group["SETUP"]["image_size_x"], sensor_group["SETUP"]["image_size_y"], 4))[:, :, :3][:, :, ::-1] 
-                            data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)),carla.ColorConverter.CityScapesPalette)
+                        elif sensor_group["CAMTYPE"] == "semantic_segmentation":
+                            binary_infos = sensor_group.get("BINARY")
+                            if binary_infos != None:
+                                image = np.reshape(np.frombuffer(data.raw_data, dtype=np.dtype("uint8")), (data.height, data.width, 4))[:, :, :3][:, :, ::-1] 
+                                for binary_info in binary_infos:
+                                    utils.save_binary_image(image, binary_info, save_path, time_stamp)
+                            else:
+                                data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)),carla.ColorConverter.CityScapesPalette)
 
                 ##################### 3D bboxes labels #######################
                 if self.save_lidar_labels:

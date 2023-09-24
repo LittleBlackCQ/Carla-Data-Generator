@@ -1,6 +1,6 @@
 DATA_SAVE_PATH: data
 
-MAP: Town05_Opt
+MAP: Town04_Opt
 
 HERO_VEHICLE: vehicle.yamaha.yzf
 
@@ -94,6 +94,8 @@ SENSOR_GROUP_LIST:
         - name: 'road'
           id: 1
         - name: 'roadline'
+          id: 24
+        - name: 'sidewalk'
           id: 2
       SETUP: {
           image_size_x: '256',

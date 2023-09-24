@@ -4,6 +4,7 @@ import carla
 import datetime
 import os
 import numpy as np
+import cv2
 
 def config_from_yaml(config_file):
     if config_file == None:
@@ -66,3 +67,15 @@ def set_sensor_setups(bp, setups, tick="0.05"):
 
 def set_sensor_transform(transform_parameters):
     return carla.Transform(carla.Location(x = transform_parameters.get('x', 0), y = transform_parameters.get('y', 0), z = transform_parameters.get('z', 0)), carla.Rotation(roll = transform_parameters.get('roll', 0), pitch = transform_parameters.get('pitch', 0), yaw = transform_parameters.get('yaw', 0)))
+
+def save_binary_image(image, info, save_path, time_stamp):
+    type_name = info["name"]
+    type_id = info["id"]
+
+    binary_image = np.zeros(np.shape(image))
+    binary_image[image[:, :, 0].astype(np.int32) == type_id, :] = [255, 255, 255]
+    
+    save_path = os.path.join(save_path, type_name)
+    if not os.path.exists(save_path):
+            os.mkdir(save_path)
+    cv2.imwrite(os.path.join(save_path, f"{time_stamp}.png"), binary_image)
