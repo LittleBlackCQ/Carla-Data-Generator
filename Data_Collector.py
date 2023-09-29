@@ -3,7 +3,6 @@ import queue
 import numpy as np
 import os
 import logging
-import utils
 import fisheye_utils
 import cv2
 import sys
@@ -18,6 +17,7 @@ except IndexError:
     pass
 
 import carla
+import utils
 '''
 Data collector for collecting point clouds of 
 different setups of sensors.
@@ -165,7 +165,8 @@ class DataCollector:
 
             transform = carla.Transform()
             location = self.world.get_random_location_from_navigation()
-            print(location)
+            if (location != None):
+                transform.location = location
             # spawn the cars and set their autopilot all together
             batch.append(SpawnActor(walker_bp, transform))
 
@@ -175,7 +176,9 @@ class DataCollector:
             else:
                 self.env_walkers.append({"id": self.world.get_actor(response.actor_id)})
         
-        walker_controller_bp = world.get_blueprint_library().find('controller.ai.walker')
+        batch = []
+
+        walker_controller_bp = self.world.get_blueprint_library().find('controller.ai.walker')
         for walker in self.env_walkers:
             batch.append(SpawnActor(walker_controller_bp, carla.Transform(), walker["id"]))
 
@@ -183,9 +186,9 @@ class DataCollector:
             if response.error:
                 self.logger.info(response.error)
             else:
-                self.env_walkers[i]["controller"] = response.actor_id
+                self.env_walkers[i]["controller"] = self.world.get_actor(response.actor_id)
 
-        self.logger.info('Set env walkers Done!')
+        self.logger.info(f'Set env walkers Done! Num of walkers: {len(self.env_walkers)}')
 
     def set_sensors(self):
         SpawnActor = carla.command.SpawnActor
@@ -475,10 +478,10 @@ class DataCollector:
         #     self.logger.info('Exit by user!')
         
         # finally:
-        #     self.set_synchronization_world(synchronous_mode=False)
-        #     self.logger.info('------------------- Destroying actors -----------------')
-        #     self.destroy_actors()
-        #     self.logger.info('------------------------ Done ------------------------')
+        self.set_synchronization_world(synchronous_mode=False)
+        self.logger.info('------------------- Destroying actors -----------------')
+        self.destroy_actors()
+        self.logger.info('------------------------ Done ------------------------')
 
         
 

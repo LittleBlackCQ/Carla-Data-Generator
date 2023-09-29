@@ -1,5 +1,5 @@
-import utils
 from Data_Collector import DataCollector
+import utils
 import os
 import argparse
 
