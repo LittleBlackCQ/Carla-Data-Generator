@@ -86,3 +86,18 @@ def save_binary_image(image, info, save_path, time_stamp):
     if not os.path.exists(save_path):
             os.mkdir(save_path)
     cv2.imwrite(os.path.join(save_path, f"{time_stamp}.png"), binary_image)
+
+def build_projection_matrix(w, h, fov):
+    focal = w / (2.0 * np.tan(fov * np.pi / 360.0))
+    K = np.identity(3)
+    K[0, 0] = K[1, 1] = focal
+    K[0, 2] = w / 2.0
+    K[1, 2] = h / 2.0
+    return K
+
+
+def is_obstructing(camera_transform, object_transform, world):
+    # Cast a ray from the camera to the vehicle and check for obstructions
+    result = world.cast_ray(camera_transform.location, object_transform.location)
+    
+    return False if len(result) <= 1 else True

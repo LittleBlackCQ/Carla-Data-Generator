@@ -6,6 +6,7 @@ import logging
 import fisheye_utils
 import cv2
 import sys
+from Data_Analyser import DataAnalyser
 import glob
 
 try:
@@ -39,6 +40,8 @@ class DataCollector:
         self.num_of_env_walkers = collector_config.get('NUM_OF_ENV_WALKERS', 0)
         self.data_save_path = collector_config.get('DATA_SAVE_PATH', 'data')
         
+        self.analyser = DataAnalyser()
+
         if not os.path.exists(self.data_save_path):
             os.mkdir(self.data_save_path)
 
@@ -298,6 +301,8 @@ class DataCollector:
     def prepare_labels(self, actors, reference_sensor_transform, map=None, data_type=None):
         labels = []
         for actor in actors:
+            if isinstance(actor, dict):
+                actor = actor["id"]
             data_type = utils.actor2type(actor) if data_type == None else data_type
             bb_cords = [0, 0, 0, 1]
 
@@ -456,16 +461,44 @@ class DataCollector:
                                 utils.save_binary_image(image, binary_info, save_path, time_stamp)
                         else:
                             data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)),carla.ColorConverter.CityScapesPalette)
+                    # if_save_camera = sensor_group.get("SAVE_LABEL", False)
+                    # if (if_save_camera):
+                    #     save_path = os.path.join(save_path, "label3")
+                    #     if not os.path.exists(save_path):
+                    #         os.mkdir(save_path)
+                    #     camera_transform = data.transform
+                    #     detected_objects = []
+                    #     for vehicle in self.env_vehicles:
+                    #         if not utils.is_obstructing(camera_transform, vehicle.get_transform(), self.world):
+                    #             detected_objects.append(vehicle)
+                    #     labels_vehicle = self.prepare_labels(detected_objects, camera_transform, map=self.world.get_map())
+                    #     for walker in self.env_walkers:
+                    #         walker = walker["id"]
+                    #         if not utils.is_obstructing(camera_transform, walker.get_transform(), self.world):
+                    #             detected_objects.append(walker)
+                    #     labels_walker = self.prepare_labels(detected_objects, camera_transform, map=self.world.get_map(), data_type="pedestrian")
+                    #     if len(labels_vehicle) == 0 and len(labels_walker) == 0:
+                    #         labels = np.array([])
+                    #     elif len(labels_vehicle) == 0:
+                    #         labels = labels_walker
+                    #     else:
+                    #         labels = np.concatenate((labels_vehicle, labels_walker), axis=0) if len(labels_walker) !=0 else labels_vehicle 
+                        
+                    #     np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
+
 
             ##################### 3D bboxes labels #######################
             if self.save_lidar_labels:
                 save_path = os.path.join(self.data_save_path, "label3")
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
-                labels = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map())
+                label_vehicle = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map())
+                label_walker = self.prepare_labels(self.env_walkers, reference_sensor_transform, map=self.world.get_map(), data_type='Pedestrian')
+                label_camera = self.prepare_labels(self.sensor_actors, reference_sensor_transform, map=self.world.get_map(), data_type='Camera')
                 label_hero = self.prepare_labels([self.hero_vehicle], reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
-                labels = np.concatenate((labels, label_hero), axis=0) if len(labels) != 0 else label_hero
 
+                labels = np.concatenate((label_vehicle, label_walker, label_camera, label_hero), axis=0)
+                labels = labels[self.analyser.boxes_in_range(labels, np.array([-100, -100, 0, 100, 100, 5])), :]
                 np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
 
             self.logger.info(f'Time stamp {time_stamp} saved successfully!')

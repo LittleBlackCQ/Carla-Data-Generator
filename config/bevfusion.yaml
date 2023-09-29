@@ -16,6 +16,7 @@ SENSOR_GROUP_LIST:
     - NAME: cam_front
       TYPE: camera
       CAMTYPE: rgb
+      # SAVE_LABEL: True, 
       SETUP: {
           image_size_x: '704',
           image_size_y: '256',
@@ -30,6 +31,7 @@ SENSOR_GROUP_LIST:
     - NAME: cam_front_right
       TYPE: camera
       CAMTYPE: rgb
+      # SAVE_LABEL: True, 
       SETUP: {
           image_size_x: '704',
           image_size_y: '256',
@@ -46,6 +48,7 @@ SENSOR_GROUP_LIST:
     - NAME: cam_front_left
       TYPE: camera
       CAMTYPE: rgb
+      # SAVE_LABEL: True, 
       SETUP: {
           image_size_x: '704',
           image_size_y: '256',
@@ -61,6 +64,7 @@ SENSOR_GROUP_LIST:
     - NAME: cam_back_right
       TYPE: camera
       CAMTYPE: rgb
+      # SAVE_LABEL: True, 
       SETUP: {
           image_size_x: '704',
           image_size_y: '256',
@@ -77,6 +81,7 @@ SENSOR_GROUP_LIST:
     - NAME: cam_back_left
       TYPE: camera
       CAMTYPE: rgb
+      # SAVE_LABEL: True, 
       SETUP: {
           image_size_x: '704',
           image_size_y: '256',

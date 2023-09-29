@@ -2,3 +2,4 @@ numpy
 pyyaml
 opencv-python
 mayavi
+pygame
