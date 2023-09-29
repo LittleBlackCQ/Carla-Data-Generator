@@ -1,6 +1,6 @@
 DATA_SAVE_PATH: data
 
-MAP: Town03_Opt
+MAP: Town01_Opt
 
 HERO_VEHICLE: vehicle.yamaha.yzf
 
@@ -9,6 +9,8 @@ TOTAL_TIMESTAMPS: 10
 SAVE_INTERVAL: 10
 
 NUM_OF_ENV_VEHICLES: 100
+
+NUM_OF_ENV_WALKERS: 30
 
 SENSOR_GROUP_LIST:
     - NAME: cam_front

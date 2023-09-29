@@ -26,6 +26,7 @@ class DataCollector:
         self.hero_vehicle_name = collector_config.get('HERO_VEHICLE', 'vehicle.tesla.model3')
         self.hero_info = collector_config.get('HERO_INFO', None)
         self.num_of_env_vehicles = collector_config.get('NUM_OF_ENV_VEHICLES', 0)
+        self.num_of_env_walkers = collector_config.get('NUM_OF_ENV_WALKERS', 0)
         self.data_save_path = collector_config.get('DATA_SAVE_PATH', 'data')
         
         if not os.path.exists(self.data_save_path):
@@ -48,6 +49,7 @@ class DataCollector:
         self.sensor_queues = []
         self.hero_vehicle = None
         self.env_vehicles = []
+        self.env_walkers = []
         self.frame = None
         
     def set_synchronization_world(self, synchronous_mode=True, delta_seconds=0.05):
@@ -95,7 +97,7 @@ class DataCollector:
 
         spawn_points = self.world.get_map().get_spawn_points()
         
-        self.logger.info(f'Total blueprints: {len(vehicle_blueprints)}')
+        self.logger.info(f'Total vehicle blueprints: {len(vehicle_blueprints)}')
         self.logger.info(f'Total spawn points: {len(spawn_points)}')
         for i, transform in enumerate(spawn_points):
             if i >= self.num_of_env_vehicles:
@@ -120,6 +122,60 @@ class DataCollector:
                 self.env_vehicles.append(self.world.get_actor(response.actor_id))
         
         self.logger.info('Set env vehicles Done!')
+
+    def set_env_walkers(self):
+        walker_blueprints = self.world.get_blueprint_library().filter("walker.pedestrian.*")
+
+        SpawnActor = carla.command.SpawnActor
+        SetAutopilot = carla.command.SetAutopilot
+        FutureActor = carla.command.FutureActor
+
+        batch = []
+        
+        self.logger.info(f'Total walkers blueprints: {len(walker_blueprints)}')
+
+        for i in range(self.num_of_env_walkers):
+
+            walker_bp = random.choice(walker_blueprints)
+
+            # set as not invincible
+            if walker_bp.has_attribute('is_invincible'):
+                walker_bp.set_attribute('is_invincible', 'false')
+
+            # set the max speed
+            if walker_bp.has_attribute('speed'):
+                if (random.random() > 0.3):
+                    # walking
+                    walker_bp.get_attribute('speed').recommended_values[1]
+                else:
+                    # running
+                    walker_bp.get_attribute('speed').recommended_values[2]
+            else:
+                print(f"Walker{i} has no speed")
+
+            transform = carla.Transform()
+            location = self.world.get_random_location_from_navigation()
+            print(location)
+            # spawn the cars and set their autopilot all together
+            batch.append(SpawnActor(walker_bp, transform))
+
+        for response in self.client.apply_batch_sync(batch, True):
+            if response.error:
+                self.logger.info(response.error)
+            else:
+                self.env_walkers.append({"id": self.world.get_actor(response.actor_id)})
+        
+        walker_controller_bp = world.get_blueprint_library().find('controller.ai.walker')
+        for walker in self.env_walkers:
+            batch.append(SpawnActor(walker_controller_bp, carla.Transform(), walker["id"]))
+
+        for i, response in enumerate(self.client.apply_batch_sync(batch, True)):
+            if response.error:
+                self.logger.info(response.error)
+            else:
+                self.env_walkers[i]["controller"] = response.actor_id
+
+        self.logger.info('Set env walkers Done!')
 
     def set_sensors(self):
         SpawnActor = carla.command.SpawnActor
@@ -288,6 +344,9 @@ class DataCollector:
             actor.destroy()
         for actor in self.sensor_actors:
             actor.destroy()
+        for actor in self.env_walkers:
+            actor["id"].destroy()
+            actor["controller"].destroy()
 
     def start_collecting(self):
         
@@ -296,8 +355,8 @@ class DataCollector:
 
         self.world = self.client.load_world(self.map)
         self.world.unload_map_layer(carla.MapLayer.ParkedVehicles) # remove parked vehicles
-        self.world.unload_map_layer(carla.MapLayer.Foliage)
-        self.world.unload_map_layer(carla.MapLayer.StreetLights)
+        # self.world.unload_map_layer(carla.MapLayer.Foliage)
+        # self.world.unload_map_layer(carla.MapLayer.StreetLights)
 
         traffic_manager = self.client.get_trafficmanager(TRAFFIC_MANAGER_PORT)
         
@@ -308,7 +367,9 @@ class DataCollector:
 
         self.set_env_vehicles()
         self.filter_vehicles_dont_want()
-    
+
+        self.set_env_walkers()
+
         self.set_sensors()
         self.set_sensor_queue()
 
