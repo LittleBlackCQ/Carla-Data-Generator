@@ -1,4 +1,3 @@
-import carla
 import random
 import queue
 import numpy as np
@@ -7,7 +6,18 @@ import logging
 import utils
 import fisheye_utils
 import cv2
+import sys
+import glob
 
+try:
+    sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.version_info.major,
+    sys.version_info.minor,
+    'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
+except IndexError:
+    pass
+
+import carla
 '''
 Data collector for collecting point clouds of 
 different setups of sensors.
