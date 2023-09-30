@@ -2,7 +2,7 @@ DATA_SAVE_PATH: data
 
 MAP: Town01_Opt
 
-HERO_VEHICLE: vehicle.yamaha.yzf
+HERO_VEHICLE: vehicle.micro.microlino
 
 TOTAL_TIMESTAMPS: 10
 
@@ -23,9 +23,9 @@ SENSOR_GROUP_LIST:
           fov: '100',
       }
       TRANSFORM: {
-          x: 1.3,
+          x: -5,
           y: 0,
-          z: 1.5,
+          z: 1.6,
       }
 
     - NAME: cam_front_right

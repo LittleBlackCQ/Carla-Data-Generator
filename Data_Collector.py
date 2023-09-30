@@ -316,14 +316,14 @@ class DataCollector:
 
             bb_to_sensor_cords = np.transpose(np.dot(bb_to_sensor_matrix, np.transpose(bb_cords)))
             bb_to_sensor_cords = bb_to_sensor_cords[:3]
-            bb_to_sensor_cords[1] = - bb_to_sensor_cords[1]
+            # bb_to_sensor_cords[1] = - bb_to_sensor_cords[1]
 
             bb_extents = [actor.bounding_box.extent.x * 2, actor.bounding_box.extent.y * 2, actor.bounding_box.extent.z * 2]
 
             if quanternion:
-                relative_roll = actor.get_transform().rotation.roll - reference_sensor_transform.rotation.roll
-                relative_pitch = actor.get_transform().rotation.pitch - reference_sensor_transform.rotation.pitch
-                relative_yaw = actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw
+                relative_roll = np.radians(actor.get_transform().rotation.roll - reference_sensor_transform.rotation.roll)
+                relative_pitch = np.radians(actor.get_transform().rotation.pitch - reference_sensor_transform.rotation.pitch)
+                relative_yaw = np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw)
                 bb_rotation = utils.rpy2quaternion(relative_roll, relative_pitch, relative_yaw)
             else:
                 bb_rotation = [- np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw)]
@@ -423,6 +423,8 @@ class DataCollector:
             
             interval_index = 0
 
+            ################### reset ref sensor ##################
+            self.reference_sensor_transform = None
             ############################# Save Data ###########################
             for sensor_group in self.sensor_group_list:
                 save_path = os.path.join(self.data_save_path, sensor_group["NAME"])
