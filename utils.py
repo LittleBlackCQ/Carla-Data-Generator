@@ -108,3 +108,11 @@ def rpy2quaternion(roll, pitch, yaw):
     z=np.cos(pitch/2)*np.sin(yaw/2)*np.cos(roll/2)-np.sin(pitch/2)*np.cos(yaw/2)*np.sin(roll/2)
     w=np.cos(pitch/2)*np.cos(yaw/2)*np.cos(roll/2)-np.sin(pitch/2)*np.sin(yaw/2)*np.sin(roll/2)
     return [x, y, z, w]
+
+def get_calibration(camera):
+    width, height, fov = list(map(float, [camera.attributes['image_size_x'], camera.attributes['image_size_y'], camera.attributes['fov']]))
+    calibration = np.identity(3)
+    calibration[0, 2] = width / 2.0
+    calibration[1, 2] = height / 2.0
+    calibration[0, 0] = calibration[1, 1] = width / (2.0 * np.tan(fov * np.pi / 360.0))
+    return calibration

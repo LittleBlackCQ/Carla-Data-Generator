@@ -55,6 +55,7 @@ class DataCollector:
 
         self.save_lane = collector_config.get('SAVE_LANE', False)
         self.save_lidar_labels = collector_config.get('SAVE_LIDAR_LABELS', True)
+        self.save_calibration = collector_config.get('SAVE_CALIBRATION', True)
 
         self.client = None
         self.world = None
@@ -423,7 +424,6 @@ class DataCollector:
             interval_index = 0
 
             ############################# Save Data ###########################
-            reference_sensor_transform = None
             for sensor_group in self.sensor_group_list:
                 save_path = os.path.join(self.data_save_path, sensor_group["NAME"])
                 ################### lidar group #############
@@ -432,17 +432,17 @@ class DataCollector:
                     data_group = data_total[:num_lidars]
                     data_total = data_total[num_lidars:]
 
-                    if reference_sensor_transform == None:
-                        reference_sensor_transform = data_group[0].transform
+                    if self.reference_sensor_transform == None:
+                        self.reference_sensor_transform = data_group[0].transform
 
                     point_group = [[data.raw_data, data.transform] for data in data_group]
-                    point_merged = self.merge_lidar_group(point_group, reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
+                    point_merged = self.merge_lidar_group(point_group, self.reference_sensor_transform, semantic=sensor_group.get('SEMANTIC', False))
                     
                     np.save(os.path.join(save_path, "%06d.npy"%(time_stamp)), point_merged)
 
                 elif sensor_group["TYPE"] == 'camera_fisheye':
-                    if reference_sensor_transform == None:
-                        reference_sensor_transform = data_total[0].transform
+                    if self.reference_sensor_transform == None:
+                        self.reference_sensor_transform = data_total[0].transform
                     num_cameras = 5
                     data_group = data_total[:num_cameras]
                     data_total = data_total[num_cameras:]
@@ -456,8 +456,8 @@ class DataCollector:
                     cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), fisheye_picture)
 
                 elif sensor_group["TYPE"] == 'camera':
-                    if reference_sensor_transform == None:
-                        reference_sensor_transform = data_total[0].transform
+                    if self.reference_sensor_transform == None:
+                        self.reference_sensor_transform = data_total[0].transform
                     data = data_total.pop(0)
                     if sensor_group["CAMTYPE"] == "rgb":
                         data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)))
@@ -500,10 +500,10 @@ class DataCollector:
                 save_path = os.path.join(self.data_save_path, "label3")
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
-                label_vehicle = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map(), data_type='Car')
-                label_walker = self.prepare_labels(self.env_walkers, reference_sensor_transform, map=self.world.get_map(), data_type='Pedestrian')
-                label_camera = self.prepare_labels(self.sensor_actors, reference_sensor_transform, map=self.world.get_map(), data_type='Camera')
-                label_hero = self.prepare_labels([self.hero_vehicle], reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
+                label_vehicle = self.prepare_labels(self.env_vehicles, self.reference_sensor_transform, map=self.world.get_map(), data_type='Car')
+                label_walker = self.prepare_labels(self.env_walkers, self.reference_sensor_transform, map=self.world.get_map(), data_type='Pedestrian')
+                label_camera = self.prepare_labels(self.sensor_actors, self.reference_sensor_transform, map=self.world.get_map(), data_type='Camera')
+                label_hero = self.prepare_labels([self.hero_vehicle], self.reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
 
                 labels = np.concatenate((label_vehicle, label_walker, label_camera, label_hero), axis=0)
                 labels = labels[self.analyser.boxes_in_range(labels, np.array([-100, -100, -2, 100, 100, 4])), :]
@@ -511,6 +511,28 @@ class DataCollector:
 
             self.logger.info(f'Time stamp {time_stamp} saved successfully!')
             time_stamp += 1
+
+        ##################### calibration #######################
+        
+        if self.save_calibration:
+            save_path = os.path.join(self.data_save_path, "calibration")
+            if not os.path.exists(save_path):
+                os.mkdir(save_path)
+            for i, sensor in enumerate(self.sensor_actors):
+                if not sensor.type_id.endswith("camera.rgb"):
+                    continue
+                sensor_name = self.sensor_group_list[i]["NAME"]
+                save_path_i = os.path.join(save_path, sensor_name)
+                if not os.path.exists(save_path_i):
+                    os.mkdir(save_path_i)
+
+                refer_to_world = self.reference_sensor_transform.get_matrix()
+                world_to_sensor = np.linalg.inv(sensor.get_transform().get_matrix())
+                extrinsic = np.dot(world_to_sensor, refer_to_world)
+                intrinsic = utils.get_calibration(sensor)
+
+                np.save(os.path.join(save_path_i, "intrinsic.npy"), intrinsic)
+                np.save(os.path.join(save_path_i, "extrinsic.npy"), extrinsic)
 
         # except RuntimeError:
         #     self.logger.info('Something wrong happened!')
