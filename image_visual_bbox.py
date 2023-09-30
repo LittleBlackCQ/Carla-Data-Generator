@@ -4,8 +4,8 @@ import os
 import cv2
 
 if __name__ == '__main__':
-    dataset = "cam_front"
-    file_id = "000001"
+    dataset = "cam_back_left"
+    file_id = "000004"
     # load image
     image_path = f'data\\{dataset}\\{file_id}.png'
     img = cv2.imread(image_path)
@@ -22,7 +22,7 @@ if __name__ == '__main__':
 
     def get_bbox(line):
         line = line.split()
-        x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w, lab= line
+        x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w, lab = line
         x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w = map(float, [x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w])
         
         x_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
@@ -34,9 +34,11 @@ if __name__ == '__main__':
         # transform the 3d bbox from object coordiante to camera_0 coordinate
         R = quaternion2matrix(np.array([rot_x, rot_y, rot_z, rot_w]))
 
-        corners_3d = np.dot(R, corners_3d) + np.array([[x], [y], [z]])
-
-        corners_y_minus_z_x = np.vstack([corners_3d[1, :], -corners_3d[2, :], corners_3d[0, :]])
+        corners_3d =  np.dot(R, corners_3d) + np.array([[x], [y], [z]])
+        corners_3d_local = np.ones((4, 8))
+        corners_3d_local[:3, :] = corners_3d
+        corners_3d_local = np.dot(extrinsic, corners_3d_local)
+        corners_y_minus_z_x = np.vstack([corners_3d_local[1, :], -corners_3d_local[2, :], corners_3d_local[0, :]])
         bbox = np.transpose(np.dot(intrinsic, corners_y_minus_z_x))
         bbox[:, 0] = bbox[:, 0] / bbox[:, 2]
         bbox[:, 1] = bbox[:, 1] / bbox[:, 2]
