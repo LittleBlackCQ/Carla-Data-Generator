@@ -1,10 +1,21 @@
 import yaml
 import logging 
-import carla
 import datetime
 import os
 import numpy as np
 import cv2
+
+import sys
+import glob
+try:
+    sys.path.append(glob.glob('../carla/dist/carla-*%d.%d-%s.egg' % (
+    sys.version_info.major,
+    sys.version_info.minor,
+    'win-amd64' if os.name == 'nt' else 'linux-x86_64'))[0])
+except IndexError:
+    pass
+
+import carla
 
 def config_from_yaml(config_file):
     if config_file == None:
@@ -103,11 +114,19 @@ def is_obstructing(camera_transform, object_transform, world):
     return False if len(result) <= 1 else True
 
 def rpy2quaternion(roll, pitch, yaw):
-    x=np.sin(pitch/2)*np.sin(yaw/2)*np.cos(roll/2)+np.cos(pitch/2)*np.cos(yaw/2)*np.sin(roll/2)
-    y=np.sin(pitch/2)*np.cos(yaw/2)*np.cos(roll/2)+np.cos(pitch/2)*np.sin(yaw/2)*np.sin(roll/2)
-    z=np.cos(pitch/2)*np.sin(yaw/2)*np.cos(roll/2)-np.sin(pitch/2)*np.cos(yaw/2)*np.sin(roll/2)
-    w=np.cos(pitch/2)*np.cos(yaw/2)*np.cos(roll/2)-np.sin(pitch/2)*np.sin(yaw/2)*np.sin(roll/2)
+    x=np.sin(pitch/2) * np.sin(yaw/2) * np.cos(roll/2) + np.cos(pitch/2) * np.cos(yaw/2) * np.sin(roll/2)
+    y=np.sin(pitch/2) * np.cos(yaw/2) * np.cos(roll/2) + np.cos(pitch/2) * np.sin(yaw/2) * np.sin(roll/2)
+    z=np.cos(pitch/2) * np.sin(yaw/2) * np.cos(roll/2) - np.sin(pitch/2) * np.cos(yaw/2) * np.sin(roll/2)
+    w=np.cos(pitch/2) * np.cos(yaw/2) * np.cos(roll/2) - np.sin(pitch/2) * np.sin(yaw/2) * np.sin(roll/2)
     return [x, y, z, w]
+
+def quaternion2matrix(q): # x, y, z, w
+    rot_matrix = np.array(
+        [[2 * (q[0]**2 + q[3]**2) - 1.0, 2 * (q[0] * q[1] + q[3] * q[2]), 2 * (q[0] * q[2] - q[3] * q[1])],
+         [2 * (q[0] * q[1] - q[3] * q[2]), 2 * (q[3]**2 + q[1]**2) - 1.0, 2 * (q[1] * q[2] + q[3] * q[0])],
+         [2 * (q[0] * q[2] + q[3] * q[1]), 2 * (q[1] * q[2] - q[3] * q[0]), 2 * (q[3]**2 + q[2]**2) - 1.0]],
+        dtype=q.dtype)
+    return rot_matrix
 
 def get_calibration(camera):
     width, height, fov = list(map(float, [camera.attributes['image_size_x'], camera.attributes['image_size_y'], camera.attributes['fov']]))
