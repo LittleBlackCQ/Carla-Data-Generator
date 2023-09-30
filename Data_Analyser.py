@@ -52,7 +52,7 @@ class DataAnalyser:
         range = [xmin, ymin, zmin, xmax, ymax, zmax]
         '''
         # corners = self.box_to_corners_global(box)
-        center = box[:3]
+        center = list(map(float, box[:3]))
         # inrange_indice = (corners[:, :2] > range[:2]) & (corners[:, :2] < range[3:5])
         inrange_indice = (center[:3] > range[:3]) & (center[:3] < range[3:6])
 

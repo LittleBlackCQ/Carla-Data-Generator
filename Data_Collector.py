@@ -190,6 +190,8 @@ class DataCollector:
                 self.logger.info(response.error)
             else:
                 self.env_walkers[i]["controller"] = self.world.get_actor(response.actor_id)
+                self.env_walkers[i]["controller"].start()
+                self.env_walkers[i]["controller"].go_to_location(self.world.get_random_location_from_navigation())
 
         self.logger.info(f'Set env walkers Done! Num of walkers: {len(self.env_walkers)}')
 
@@ -298,7 +300,7 @@ class DataCollector:
             if data_origin.frame == self.frame:
                 return data_origin
 
-    def prepare_labels(self, actors, reference_sensor_transform, map=None, data_type=None):
+    def prepare_labels(self, actors, reference_sensor_transform, map=None, data_type=None, quanternion=True):
         labels = []
         for actor in actors:
             if isinstance(actor, dict):
@@ -317,9 +319,15 @@ class DataCollector:
 
             bb_extents = [actor.bounding_box.extent.x * 2, actor.bounding_box.extent.y * 2, actor.bounding_box.extent.z * 2]
 
-            bb_rotation = - np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw) 
+            if quanternion:
+                relative_roll = actor.get_transform().rotation.roll - reference_sensor_transform.rotation.roll
+                relative_pitch = actor.get_transform().rotation.pitch - reference_sensor_transform.rotation.pitch
+                relative_yaw = actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw
+                bb_rotation = utils.rpy2quaternion(relative_roll, relative_pitch, relative_yaw)
+            else:
+                bb_rotation = [- np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw)]
             
-            bb_label = list(bb_to_sensor_cords) + list(bb_extents) + [bb_rotation] + [data_type]
+            bb_label = list(bb_to_sensor_cords) + list(bb_extents) + list(bb_rotation) + [data_type]
 
             if map != None and self.save_lane:
                 way_point = map.get_waypoint(actor.get_location())
@@ -492,13 +500,13 @@ class DataCollector:
                 save_path = os.path.join(self.data_save_path, "label3")
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
-                label_vehicle = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map())
+                label_vehicle = self.prepare_labels(self.env_vehicles, reference_sensor_transform, map=self.world.get_map(), data_type='Car')
                 label_walker = self.prepare_labels(self.env_walkers, reference_sensor_transform, map=self.world.get_map(), data_type='Pedestrian')
                 label_camera = self.prepare_labels(self.sensor_actors, reference_sensor_transform, map=self.world.get_map(), data_type='Camera')
                 label_hero = self.prepare_labels([self.hero_vehicle], reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
 
                 labels = np.concatenate((label_vehicle, label_walker, label_camera, label_hero), axis=0)
-                labels = labels[self.analyser.boxes_in_range(labels, np.array([-100, -100, 0, 100, 100, 5])), :]
+                labels = labels[self.analyser.boxes_in_range(labels, np.array([-100, -100, -2, 100, 100, 4])), :]
                 np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
 
             self.logger.info(f'Time stamp {time_stamp} saved successfully!')

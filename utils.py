@@ -101,3 +101,10 @@ def is_obstructing(camera_transform, object_transform, world):
     result = world.cast_ray(camera_transform.location, object_transform.location)
     
     return False if len(result) <= 1 else True
+
+def rpy2quaternion(roll, pitch, yaw):
+    x=np.sin(pitch/2)*np.sin(yaw/2)*np.cos(roll/2)+np.cos(pitch/2)*np.cos(yaw/2)*np.sin(roll/2)
+    y=np.sin(pitch/2)*np.cos(yaw/2)*np.cos(roll/2)+np.cos(pitch/2)*np.sin(yaw/2)*np.sin(roll/2)
+    z=np.cos(pitch/2)*np.sin(yaw/2)*np.cos(roll/2)-np.sin(pitch/2)*np.cos(yaw/2)*np.sin(roll/2)
+    w=np.cos(pitch/2)*np.cos(yaw/2)*np.cos(roll/2)-np.sin(pitch/2)*np.sin(yaw/2)*np.sin(roll/2)
+    return [x, y, z, w]
