@@ -13,11 +13,7 @@ In a line, the attributes separated by space are `x y z l w h rot_x rot_y rot_z 
 
 - `x y z` are the 3D location of the object. The `x y z` coordinates are a little bit weird in Carla, which is shown below.
 
-z
-^     x
-|   /
-| /
-|------------->y
+![carla-coordinates](pictures\carla-coordinates.png)
 
 - `l w h` are the length of the object on the `x y z` axis respectively.
 - `rot_x rot_y rot_z rot_w` are the quaternion of the object.
