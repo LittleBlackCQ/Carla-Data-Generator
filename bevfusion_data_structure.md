@@ -4,10 +4,12 @@ There are some directories in the `data/`.
 ### cam_*
 In the directory like `data/cam_front/`, there are images collected from the camera sensor. The data format is `.png`, start with a 6 number long integer, such as `000001`, which is the frame when the data is collected. The images, labels with the same frame id are collected at the same time.
 
+For detailed setups of all cameras, please refer to `config/bevfusion.yaml`
+
 ### label3
 In `data/label3/`, there is the information of samples. Each line represents an object. 
 
-In a line, the attributes separated by space are `x y z l w h rot_x rot_y rot_z rot_w velocity label`.
+In a line, the attributes separated by space are `x y z l w h rot_x rot_y rot_z rot_w velocity instance_id label`.
 
 - `x y z` are the 3D location of the object. The `x y z` coordinates are a little bit weird in Carla, which is shown below.
 
@@ -20,6 +22,7 @@ z
 - `l w h` are the length of the object on the `x y z` axis respectively.
 - `rot_x rot_y rot_z rot_w` are the quaternion of the object.
 - `velocity` is the speed of the object.
+- `instance_id` is the identifier for the object, which is unique during a given episode.
 - `label` is a string representing the class of the object. `Car` represents vehicles. `Pedestrian` represents walkers. `Hero` represents the ego vehicle.
 
 ### calibration

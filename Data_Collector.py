@@ -58,6 +58,7 @@ class DataCollector:
         self.save_calibration = collector_config.get('SAVE_CALIBRATION', True)
         self.save_velocity = collector_config.get('SAVE_VELOCITY', True)
         self.save_quaternion = collector_config.get('SAVE_QUATERNION', True)
+        self.save_instance = collector_config.get('SAVE_INSTANCE', True)
 
         self.client = None
         self.world = None
@@ -336,6 +337,9 @@ class DataCollector:
                 velocity = actor.get_velocity().length()
                 bb_label += [velocity]
 
+            if self.save_instance:
+                bb_label += [actor.id]
+                
             if map != None and self.save_lane:
                 way_point = map.get_waypoint(actor.get_location())
                 bb_label += [way_point.lane_id]
