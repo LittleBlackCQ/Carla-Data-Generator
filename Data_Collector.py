@@ -56,6 +56,8 @@ class DataCollector:
         self.save_lane = collector_config.get('SAVE_LANE', False)
         self.save_lidar_labels = collector_config.get('SAVE_LIDAR_LABELS', True)
         self.save_calibration = collector_config.get('SAVE_CALIBRATION', True)
+        self.save_velocity = collector_config.get('SAVE_VELOCITY', True)
+        self.save_quaternion = collector_config.get('SAVE_QUATERNION', True)
 
         self.client = None
         self.world = None
@@ -73,7 +75,7 @@ class DataCollector:
         settings.fixed_delta_seconds = delta_seconds
         self.world.apply_settings(settings)
 
-    def set_synchronization_traffic_manager(self, traffic_manager, global_distance=3, hybrid_physics_mode=True, synchronous_mode=True):
+    def set_synchronization_traffic_manager(self, traffic_manager, global_distance=3, hybrid_physics_mode=False, synchronous_mode=True):
         # Set up the TM in synchronous mode
         traffic_manager.set_synchronous_mode(synchronous_mode)
         traffic_manager.set_global_distance_to_leading_vehicle(global_distance)
@@ -301,7 +303,7 @@ class DataCollector:
             if data_origin.frame == self.frame:
                 return data_origin
 
-    def prepare_labels(self, actors, reference_sensor_transform, map=None, data_type=None, quanternion=True):
+    def prepare_labels(self, actors, reference_sensor_transform, map=None, data_type=None):
         labels = []
         for actor in actors:
             if isinstance(actor, dict):
@@ -320,7 +322,7 @@ class DataCollector:
 
             bb_extents = [actor.bounding_box.extent.x * 2, actor.bounding_box.extent.y * 2, actor.bounding_box.extent.z * 2]
 
-            if quanternion:
+            if self.save_quaternion:
                 relative_roll = np.radians(actor.get_transform().rotation.roll - reference_sensor_transform.rotation.roll)
                 relative_pitch = np.radians(actor.get_transform().rotation.pitch - reference_sensor_transform.rotation.pitch)
                 relative_yaw = np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw)
@@ -328,7 +330,11 @@ class DataCollector:
             else:
                 bb_rotation = [- np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw)]
             
-            bb_label = list(bb_to_sensor_cords) + list(bb_extents) + list(bb_rotation) + [data_type]
+            bb_label = list(bb_to_sensor_cords) + list(bb_extents) + list(bb_rotation)
+
+            if self.save_velocity:
+                velocity = actor.get_velocity().length()
+                bb_label += [velocity]
 
             if map != None and self.save_lane:
                 way_point = map.get_waypoint(actor.get_location())
@@ -341,7 +347,8 @@ class DataCollector:
                 right_lane_id = right_lane.lane_id if (right_lane != None and str(right_lane.lane_type)=="Driving") else None
 
                 bb_label += [left_lane_id, right_lane_id]
-                
+            
+            bb_label += [data_type]
             labels.append(bb_label)
 
         return np.array(labels)

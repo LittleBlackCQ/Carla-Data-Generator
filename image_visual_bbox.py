@@ -4,7 +4,7 @@ import os
 import cv2
 
 if __name__ == '__main__':
-    dataset = "cam_back_left"
+    dataset = "cam_front"
     file_id = "000004"
     # load image
     image_path = f'data\\{dataset}\\{file_id}.png'
@@ -21,8 +21,8 @@ if __name__ == '__main__':
     extrinsic = np.load(os.path.join(calibration_dir, "extrinsic.npy"))
 
     def get_bbox(line):
-        line = line.split()
-        x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w, lab = line
+        line = np.array(line.split())
+        x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w = line[:10]
         x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w = map(float, [x, y, z, l, w, h, rot_x, rot_y, rot_z, rot_w])
         
         x_corners = [l / 2, l / 2, -l / 2, -l / 2, l / 2, l / 2, -l / 2, -l / 2]
