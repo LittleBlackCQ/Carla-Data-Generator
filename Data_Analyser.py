@@ -39,20 +39,21 @@ class DataAnalyser:
         inrange_indices = np.all(inrange_indices, axis=1)
         return inrange_indices
     
-    def boxes_in_range(self, boxes, range):
+    def boxes_in_range(self, boxes, range, ref=np.array([0, 0, 0])):
         inrange_indices = []
 
         for box in boxes:
-            inrange_indices.append(self.box_in_range(box, range))
+            inrange_indices.append(self.box_in_range(box, range, ref))
         
         return inrange_indices
 
-    def box_in_range(self, box, range):
+    def box_in_range(self, box, range, ref):
         '''
         range = [xmin, ymin, zmin, xmax, ymax, zmax]
         '''
         # corners = self.box_to_corners_global(box)
         center = list(map(float, box[:3]))
+        center = center - ref
         # inrange_indice = (corners[:, :2] > range[:2]) & (corners[:, :2] < range[3:5])
         inrange_indice = (center[:3] > range[:3]) & (center[:3] < range[3:6])
 

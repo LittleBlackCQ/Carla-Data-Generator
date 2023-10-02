@@ -47,8 +47,6 @@ class DataCollector:
 
         self.sensor_group_list = collector_config['SENSOR_GROUP_LIST']
         
-        self.reference_sensor_transform = None
-
         self.total_timestamp = collector_config.get('TOTAL_TIMESTAMPS', 2000)
         self.save_interval = collector_config.get('SAVE_INTERVAL', None)
         self.start_timestamp = collector_config.get('START_TIMESTAMP', 0)
@@ -304,7 +302,7 @@ class DataCollector:
             if data_origin.frame == self.frame:
                 return data_origin
 
-    def prepare_labels(self, actors, reference_sensor_transform, map=None, data_type=None):
+    def prepare_labels(self, actors, map=None, data_type=None):
         labels = []
         for actor in actors:
             if isinstance(actor, dict):
@@ -314,24 +312,26 @@ class DataCollector:
 
             bb_to_actor_matrix = carla.Transform(actor.bounding_box.location).get_matrix()
             actor_to_world_matrix = actor.get_transform().get_matrix()
-            world_to_sensor_matrix = reference_sensor_transform.get_inverse_matrix()
-            bb_to_sensor_matrix = np.dot(world_to_sensor_matrix, np.dot(actor_to_world_matrix, bb_to_actor_matrix))
+            # world_to_sensor_matrix = reference_sensor_transform.get_inverse_matrix()
+            # bb_to_sensor_matrix = np.dot(world_to_sensor_matrix, np.dot(actor_to_world_matrix, bb_to_actor_matrix))
+            bb_to_world_matrix = np.dot(actor_to_world_matrix, bb_to_actor_matrix)
 
-            bb_to_sensor_cords = np.transpose(np.dot(bb_to_sensor_matrix, np.transpose(bb_cords)))
-            bb_to_sensor_cords = bb_to_sensor_cords[:3]
+            # bb_to_sensor_cords = np.transpose(np.dot(bb_to_sensor_matrix, np.transpose(bb_cords)))
+            # bb_to_sensor_cords = bb_to_sensor_cords[:3]
+            bb_to_world_cords = np.transpose(np.dot(bb_to_world_matrix, np.transpose(bb_cords)))[:3]
             # bb_to_sensor_cords[1] = - bb_to_sensor_cords[1]
 
             bb_extents = [actor.bounding_box.extent.x * 2, actor.bounding_box.extent.y * 2, actor.bounding_box.extent.z * 2]
 
             if self.save_quaternion:
-                relative_roll = np.radians(actor.get_transform().rotation.roll - reference_sensor_transform.rotation.roll)
-                relative_pitch = np.radians(actor.get_transform().rotation.pitch - reference_sensor_transform.rotation.pitch)
-                relative_yaw = np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw)
+                relative_roll = np.radians(actor.get_transform().rotation.roll) # - reference_sensor_transform.rotation.roll)
+                relative_pitch = np.radians(actor.get_transform().rotation.pitch) # - reference_sensor_transform.rotation.pitch)
+                relative_yaw = np.radians(actor.get_transform().rotation.yaw) # - reference_sensor_transform.rotation.yaw)
                 bb_rotation = utils.rpy2quaternion(relative_roll, relative_pitch, relative_yaw)
             else:
-                bb_rotation = [- np.radians(actor.get_transform().rotation.yaw - reference_sensor_transform.rotation.yaw)]
+                bb_rotation = [- np.radians(actor.get_transform().rotation.yaw)] # - reference_sensor_transform.rotation.yaw)]
             
-            bb_label = list(bb_to_sensor_cords) + list(bb_extents) + list(bb_rotation)
+            bb_label = list(bb_to_world_cords) + list(bb_extents) + list(bb_rotation)
 
             if self.save_velocity:
                 velocity = actor.get_velocity().length()
@@ -469,8 +469,6 @@ class DataCollector:
                     cv2.imwrite(os.path.join(save_path, "%06d.png"%(time_stamp)), fisheye_picture)
 
                 elif sensor_group["TYPE"] == 'camera':
-                    if self.reference_sensor_transform == None:
-                        self.reference_sensor_transform = data_total[0].transform
                     data = data_total.pop(0)
                     if sensor_group["CAMTYPE"] == "rgb":
                         data.save_to_disk(os.path.join(save_path, "%06d.png"%(time_stamp)))
@@ -513,13 +511,14 @@ class DataCollector:
                 save_path = os.path.join(self.data_save_path, "label3")
                 if not os.path.exists(save_path):
                     os.mkdir(save_path)
-                label_vehicle = self.prepare_labels(self.env_vehicles, self.reference_sensor_transform, map=self.world.get_map(), data_type='Car')
-                label_walker = self.prepare_labels(self.env_walkers, self.reference_sensor_transform, map=self.world.get_map(), data_type='Pedestrian')
-                label_camera = self.prepare_labels(self.sensor_actors, self.reference_sensor_transform, map=self.world.get_map(), data_type='Camera')
-                label_hero = self.prepare_labels([self.hero_vehicle], self.reference_sensor_transform, map=self.world.get_map(), data_type='Hero')
+                label_vehicle = self.prepare_labels(self.env_vehicles, map=self.world.get_map(), data_type='Car')
+                label_walker = self.prepare_labels(self.env_walkers, map=self.world.get_map(), data_type='Pedestrian')
+                label_camera = self.prepare_labels(self.sensor_actors, map=self.world.get_map(), data_type='Camera')
+                label_hero = self.prepare_labels([self.hero_vehicle], map=self.world.get_map(), data_type='Hero')
 
                 labels = np.concatenate((label_vehicle, label_walker, label_camera, label_hero), axis=0)
-                labels = labels[self.analyser.boxes_in_range(labels, np.array([-100, -100, -2, 100, 100, 4])), :]
+                ref = np.array([self.hero_vehicle.get_transform().location.x, self.hero_vehicle.get_transform().location.y, self.hero_vehicle.get_transform().location.z])
+                labels = labels[self.analyser.boxes_in_range(labels, np.array([-100, -100, -2, 100, 100, 4]), ref=ref), :]
                 np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
 
             self.logger.info(f'Time stamp {time_stamp} saved successfully!')
@@ -539,9 +538,10 @@ class DataCollector:
                 if not os.path.exists(save_path_i):
                     os.mkdir(save_path_i)
 
-                refer_to_world = self.reference_sensor_transform.get_matrix()
-                world_to_sensor = np.linalg.inv(sensor.get_transform().get_matrix())
-                extrinsic = np.dot(world_to_sensor, refer_to_world)
+                bb_to_ego = carla.Transform(self.hero_vehicle.bounding_box.location).get_matrix()
+                ego_to_world = self.hero_vehicle.get_transform().get_matrix()
+                world_to_sensor = sensor.get_transform().get_inverse_matrix()
+                extrinsic = np.dot(world_to_sensor, np.dot(ego_to_world, bb_to_ego))
                 intrinsic = utils.get_calibration(sensor)
 
                 np.save(os.path.join(save_path_i, "intrinsic.npy"), intrinsic)
@@ -560,4 +560,3 @@ class DataCollector:
         self.logger.info('------------------------ Done ------------------------')
 
         
-
