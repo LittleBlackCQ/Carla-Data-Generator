@@ -393,6 +393,7 @@ class DataCollector:
 
         self.world = self.client.load_world(self.map)
         self.world.unload_map_layer(carla.MapLayer.ParkedVehicles) # remove parked vehicles
+        # self.world.unload_map_layer(carla.MapLayer.Buildings)
         # self.world.unload_map_layer(carla.MapLayer.Foliage)
         # self.world.unload_map_layer(carla.MapLayer.StreetLights)
 
@@ -516,7 +517,14 @@ class DataCollector:
                 label_camera = self.prepare_labels(self.sensor_actors, map=self.world.get_map(), data_type='Camera')
                 label_hero = self.prepare_labels([self.hero_vehicle], map=self.world.get_map(), data_type='Hero')
 
-                labels = np.concatenate((label_vehicle, label_walker, label_camera, label_hero), axis=0)
+                labels = label_hero
+                if len(label_camera) != 0:
+                    labels = np.concatenate((label_camera, labels), axis=0)
+                if len(label_walker) != 0:
+                    labels = np.concatenate((label_walker, labels), axis=0)
+                if len(label_vehicle) != 0:
+                    labels = np.concatenate((label_vehicle, labels), axis=0)
+
                 ref = np.array([self.hero_vehicle.get_transform().location.x, self.hero_vehicle.get_transform().location.y, self.hero_vehicle.get_transform().location.z])
                 labels = labels[self.analyser.boxes_in_range(labels, np.array([-100, -100, -2, 100, 100, 4]), ref=ref), :]
                 np.savetxt(os.path.join(save_path, "%06d.txt"%(time_stamp)), labels, fmt='%s')
@@ -531,8 +539,6 @@ class DataCollector:
             if not os.path.exists(save_path):
                 os.mkdir(save_path)
             for i, sensor in enumerate(self.sensor_actors):
-                if not sensor.type_id.endswith("camera.rgb"):
-                    continue
                 sensor_name = self.sensor_group_list[i]["NAME"]
                 save_path_i = os.path.join(save_path, sensor_name)
                 if not os.path.exists(save_path_i):

@@ -24,8 +24,8 @@ SENSOR_GROUP_LIST:
       TYPE: camera
       CAMTYPE: semantic_segmentation
       SETUP: {
-          image_size_x: '2560',
-          image_size_y: '2560',
+          image_size_x: '2432',
+          image_size_y: '2432',
           fov: '90',
       }
       TRANSFORM: {
