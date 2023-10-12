@@ -34,4 +34,8 @@ Detailed instruction of using these parameters can be found in [image_visual_bbo
 
 ### cam_semantic
 
-The binary map of drivable area is still under development. You can ignore the data.
+#### Drivable Area
+Drivable area is collected in time by a semantic camera.
+
+#### Curbs and Crosswalks
+Curbs and crosswalks are considered as static objects, which are pre-drawed in the whole map. During training, we can cut a part from the whole map according to the coordinates of the ego vehicle. The code transfering a point in the global coordinates system to a pixel in the whole map is written in [point_in_map.py](https://github.com/little-black-sjtu/carla-data-generator/blob/bevfusion/point_in_map.py). The pre-drawed curbs and crosswalks of map_05 are stored in [map_05/](https://github.com/little-black-sjtu/carla-data-generator/blob/bevfusion/map_curbs_crosswalks/map_05/).
