@@ -1,3 +1,6 @@
-fisheye/
-data*/
-__pycache__
+*
+!*.py
+!log/
+!log/*
+!config/
+!config/*
