@@ -57,15 +57,10 @@ SENSOR_GROUP_LIST:
             }
 
     - NAME: one_lidar_05
-<<<<<<< HEAD
-      LIDARS: 
-          - NAME: bottom_center_lidar
-=======
       TYPE: lidar_group
       SENSOR_GROUP: 
           - NAME: bottom_center_lidar
             TYPE: lidar.ray_cast
->>>>>>> fish
             SETUP: {
                 range: '150', 
                 points_per_second: '1228800',
